@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Route yang butuh login sebagai User
 const USER_ROUTES = [
   "/dashboard",
   "/bookings",
@@ -9,13 +8,10 @@ const USER_ROUTES = [
   "/profile",
 ];
 
-// Route yang butuh role Vendor
 const VENDOR_ROUTES = ["/vendor/dashboard", "/vendor/services", "/vendor/bookings", "/vendor/availability", "/vendor/analytics"];
 
-// Route yang butuh role Admin
 const ADMIN_ROUTES = ["/admin"];
 
-// Route khusus guest (redirect jika sudah login)
 const GUEST_ONLY_ROUTES = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
@@ -48,7 +44,6 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // --- Guest-only routes ---
   if (GUEST_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
     if (user) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -56,7 +51,6 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // --- Protected user routes ---
   if (USER_ROUTES.some((r) => pathname.startsWith(r))) {
     if (!user) {
       const redirectUrl = new URL("/login", request.url);
@@ -65,20 +59,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // --- Vendor routes ---
   if (VENDOR_ROUTES.some((r) => pathname.startsWith(r))) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    // Role check dilakukan di page level (lebih fleksibel)
   }
 
-  // --- Admin routes ---
   if (ADMIN_ROUTES.some((r) => pathname.startsWith(r))) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    // Role check dilakukan di page level
   }
 
   return supabaseResponse;
