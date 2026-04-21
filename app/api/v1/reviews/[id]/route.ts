@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { ok, unauthorized, badRequest, forbidden, notFound, serverError } from "@/lib/utils/api";
+import { ok, badRequest, unauthorized, forbidden, notFound, formatZodErrors, serverError } from "@/lib/utils/api";
 import { UpdateReviewSchema } from "@/lib/validators";
 
-// PATCH /api/v1/reviews/[id] — edit ulasan (dalam 24 jam)
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     const supabase = await createClient();
@@ -13,12 +15,40 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const body = await request.json();
     const parsed = UpdateReviewSchema.safeParse(body);
-    if (!parsed.success) return badRequest(parsed.error.issues.map((e) => e.message).join("; "));
+    if (!parsed.success) {
+      return badRequest(formatZodErrors(parsed.error.flatten().fieldErrors));
+    }
 
-    // TODO: fetch review, pastikan user_id = user.id
-    // TODO: cek created_at > now() - 24 jam, kalau tidak -> forbidden
-    // TODO: update review
-    return ok({ message: "TODO: implement review update" });
+    const { data: review } = await supabase
+      .from("reviews")
+      .select("id, user_id, created_at")
+      .eq("id", id)
+      .single();
+
+    if (!review) return notFound("Ulasan tidak ditemukan.");
+    if (review.user_id !== user.id) return forbidden("Kamu bukan pemilik ulasan ini.");
+
+    const createdAt = new Date(review.created_at);
+    const diff = Date.now() - createdAt.getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+
+    if (diff > twentyFourHours) {
+      return forbidden("Ulasan hanya bisa diedit dalam 24 jam setelah dibuat.");
+    }
+
+    const { data: updated, error } = await supabase
+      .from("reviews")
+      .update({
+        ...parsed.data,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("id, rating, comment, updated_at")
+      .single();
+
+    if (error) return serverError(error.message);
+
+    return ok({ review: updated, message: "Ulasan berhasil diperbarui." });
   } catch {
     return serverError();
   }
