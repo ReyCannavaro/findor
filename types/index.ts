@@ -1,7 +1,3 @@
-// ============================================================
-// ENUMS
-// ============================================================
-
 export type BookingStatus =
   | "pending"
   | "confirmed"
@@ -14,10 +10,6 @@ export type BookingStatus =
 export type AvailabilityStatus = "available" | "full" | "off";
 
 export type UserRole = "guest" | "user" | "vendor" | "admin";
-
-// ============================================================
-// DATABASE ROW TYPES
-// ============================================================
 
 export interface UserProfile {
   id: string;
@@ -113,10 +105,6 @@ export interface Bookmark {
   created_at: string;
 }
 
-// ============================================================
-// API RESPONSE TYPES
-// ============================================================
-
 export interface ApiResponse<T = null> {
   success: boolean;
   data?: T;
@@ -132,10 +120,6 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-// ============================================================
-// JOINED / ENRICHED TYPES
-// ============================================================
-
 export interface VendorWithDetails extends VendorProfile {
   services: Service[];
   reviews: ReviewWithUser[];
@@ -150,10 +134,6 @@ export interface BookingWithDetails extends Booking {
 export interface ReviewWithUser extends Review {
   user: Pick<UserProfile, "id" | "full_name" | "avatar_url">;
 }
-
-// ============================================================
-// SEARCH & FILTER TYPES
-// ============================================================
 
 export interface VendorSearchParams {
   q?: string;

@@ -46,7 +46,6 @@ export async function middleware(request: NextRequest) {
 
   if (VENDOR_ROUTES.some((r) => pathname.startsWith(r))) {
     if (!user) return NextResponse.redirect(new URL("/login", request.url));
-    // Role check detail dilakukan di page level
     return supabaseResponse;
   }
 
