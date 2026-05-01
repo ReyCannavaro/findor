@@ -1,37 +1,21 @@
 'use client';
 import Link from 'next/link';
-import { Menu, X, ArrowRight, ChevronDown, User, Receipt, Heart, Store, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, ArrowRight, ChevronDown, User, Receipt, Heart, Store, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-type UserProfile = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  role: 'user' | 'vendor' | 'admin';
-};
-
 export default function Navbar() {
-  const [open, setOpen]               = useState(false);
-  const [scrolled, setScrolled]       = useState(false);
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const pathname  = usePathname();
-  const router    = useRouter();
-  const [user, setUser]   = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<{ id: string; name: string; role: string; isVendor: boolean } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real user dari API
   useEffect(() => {
-    fetch('/api/v1/auth/me')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setUser(d.data.profile);
-        else setUser(null);
-      })
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, [pathname]);
+    try { setUser(JSON.parse(localStorage.getItem('user') || 'null')); } catch { setUser(null); }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -49,19 +33,13 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const isLoggedIn = !!user && !loading;
+  const isLoggedIn = !!user;
 
-  const requireAuth = (callback: () => void) => {
-    if (!isLoggedIn) router.push('/login');
-    else callback();
-  };
-
-  const handleLogout = async () => {
-    await fetch('/api/v1/auth/logout', { method: 'POST' });
+  const handleLogout = () => {
+    localStorage.removeItem('user');
     setUser(null);
     setDropdownOpen(false);
     router.push('/');
-    router.refresh();
   };
 
   const navLinks = [
@@ -70,21 +48,14 @@ export default function Navbar() {
     { href: '/about', label: 'Tentang Kami' },
   ];
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) => pathname === href;
 
   const dropdownItems = [
     { icon: <User size={15} />, label: 'Profil Saya', href: '/profile' },
     { icon: <Receipt size={15} />, label: 'Transaksi Saya', href: '/bookings' },
     { icon: <Heart size={15} />, label: 'Wishlist', href: '/bookmarks' },
-    ...(user?.role === 'vendor'
-      ? [{ icon: <Store size={15} />, label: 'Dashboard Vendor', href: '/vendor/dashboard' }]
-      : [{ icon: <Store size={15} />, label: 'Daftarkan Layanan', href: '/vendor/register' }]),
-    ...(user?.role === 'admin'
-      ? [{ icon: <LayoutDashboard size={15} />, label: 'Admin Panel', href: '/admin/vendors' }]
-      : []),
+    { icon: <Store size={15} />, label: 'Dashboard Vendor', href: '/vendor/dashboard' },
   ];
-
-  const displayName = user?.full_name ?? user?.email?.split('@')[0] ?? 'User';
 
   return (
     <>
@@ -269,7 +240,6 @@ export default function Navbar() {
         .fn-user-btn.open .fn-user-avatar {
           box-shadow: 0 0 0 2.5px rgba(28,61,46,0.22);
         }
-
         .fn-user-name {
           font-size: 13.5px;
           font-weight: 600;
@@ -306,12 +276,8 @@ export default function Navbar() {
           border-bottom: 1px solid #f3f4f6;
           margin-bottom: 4px;
         }
-        .fn-dd-name {
-          font-size: 13px; font-weight: 700; color: #111827;
-        }
-        .fn-dd-role {
-          font-size: 11px; color: #9ca3af; margin-top: 1px;
-        }
+        .fn-dd-name { font-size: 13px; font-weight: 700; color: #111827; }
+        .fn-dd-role { font-size: 11px; color: #9ca3af; margin-top: 1px; }
         .fn-dd-item {
           display: flex;
           align-items: center;
@@ -333,13 +299,8 @@ export default function Navbar() {
         .fn-dd-item:hover { background: #f4faf6; color: #1C3D2E; }
         .fn-dd-item svg { color: #9ca3af; flex-shrink: 0; transition: color 0.15s, transform 0.15s; }
         .fn-dd-item:hover svg { color: #1C3D2E; transform: translateX(2px); }
-        .fn-dd-sep {
-          height: 1px; background: #f3f4f6;
-          margin: 4px 0;
-        }
-        .fn-dd-logout {
-          color: #ef4444 !important;
-        }
+        .fn-dd-sep { height: 1px; background: #f3f4f6; margin: 4px 0; }
+        .fn-dd-logout { color: #ef4444 !important; }
         .fn-dd-logout:hover { background: #fef2f2 !important; }
         .fn-dd-logout svg { color: #ef4444 !important; }
 
@@ -399,11 +360,7 @@ export default function Navbar() {
           box-shadow: 0 1px 5px rgba(0,0,0,0.07);
         }
         .fn-m-link svg { color: #bbb; }
-        .fn-m-sep {
-          height: 0.75px;
-          background: rgba(0,0,0,0.07);
-          margin: 6px 2px 10px;
-        }
+        .fn-m-sep { height: 0.75px; background: rgba(0,0,0,0.07); margin: 6px 2px 10px; }
         .fn-m-cta {
           display: flex;
           align-items: center;
@@ -466,10 +423,13 @@ export default function Navbar() {
 
       <div className={`fn-nav-wrapper${scrolled ? ' scrolled' : ''}`}>
         <nav className={`fn-pill${scrolled ? ' scrolled' : ''}`}>
+
           <Link href="/" className="fn-logo">
             <img src="/logo_findor.jpg" alt="Findor" className="fn-logo-img" />
           </Link>
+
           <div className="fn-sep-line" />
+
           <div className="fn-links">
             {navLinks.map(({ href, label }) => (
               <Link key={href} href={href} className={`fn-link${isActive(href) ? ' active' : ''}`}>
@@ -481,45 +441,33 @@ export default function Navbar() {
           <div className="fn-desktop-actions" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div className="fn-sep-line" />
 
-            {loading ? (
-              <div style={{ width: 80, height: 36, borderRadius: 999, background: 'rgba(0,0,0,0.05)' }} />
-            ) : !isLoggedIn ? (
+            {!isLoggedIn ? (
               <>
                 <Link href="/login" className="fn-login">Masuk</Link>
-                <Link href="/vendor/register" className="fn-cta">Daftarkan Layanan</Link>
+                <Link href="/vendor/dashboard" className="fn-cta">Daftarkan Layanan</Link>
               </>
             ) : (
               <div ref={dropdownRef} style={{ position: 'relative' }}>
                 <button className={`fn-user-btn${dropdownOpen ? ' open' : ''}`} onClick={() => setDropdownOpen(v => !v)}>
                   <div className="fn-user-avatar">
-                    {displayName[0].toUpperCase()}
+                    {user.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="fn-user-name">{displayName}</span>
-                  <ChevronDown size={13} color="#9ca3af" style={{ transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1)', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+                  <span className="fn-user-name">{user.name}</span>
+                  <ChevronDown size={13} color="#9ca3af" style={{ transition: 'transform 0.25s', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
                 </button>
 
                 {dropdownOpen && (
                   <div className="fn-dropdown">
                     <div className="fn-dd-header">
-                      <div className="fn-dd-name">{displayName}</div>
-                      <div className="fn-dd-role">
-                        {user?.role === 'admin' ? 'Administrator' : user?.role === 'vendor' ? 'Vendor & User' : 'User'}
-                      </div>
+                      <div className="fn-dd-name">{user.name}</div>
+                      <div className="fn-dd-role">{user.isVendor ? 'Vendor & User' : 'User'}</div>
                     </div>
-
                     {dropdownItems.map(item => (
-                      <Link
-                        key={item.label}
-                        href={item.href}
-                        className="fn-dd-item"
-                        onClick={() => setDropdownOpen(false)}
-                      >
+                      <Link key={item.label} href={item.href} className="fn-dd-item" onClick={() => setDropdownOpen(false)}>
                         {item.icon} {item.label}
                       </Link>
                     ))}
-
                     <div className="fn-dd-sep" />
-
                     <button className="fn-dd-item fn-dd-logout" onClick={handleLogout}>
                       <LogOut size={15} /> Keluar
                     </button>
@@ -540,40 +488,22 @@ export default function Navbar() {
         <div className="fn-drawer-wrap">
           <div className="fn-drawer">
             {navLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`fn-m-link${isActive(href) ? ' active' : ''}`}
-                onClick={() => setOpen(false)}
-              >
+              <Link key={href} href={href} className={`fn-m-link${isActive(href) ? ' active' : ''}`} onClick={() => setOpen(false)}>
                 {label}
                 <ArrowRight size={15} strokeWidth={1.8} />
               </Link>
             ))}
-
             <div className="fn-m-sep" />
-
-            {loading ? null : !isLoggedIn ? (
+            {!isLoggedIn ? (
               <>
-                <Link href="/vendor/register" className="fn-m-cta" onClick={() => setOpen(false)}>
-                  Daftarkan Layanan
-                </Link>
-                <Link href="/login" className="fn-m-login" onClick={() => setOpen(false)}>
-                  Masuk
-                </Link>
+                <Link href="/vendor/dashboard" className="fn-m-cta" onClick={() => setOpen(false)}>Daftarkan Layanan</Link>
+                <Link href="/login" className="fn-m-login" onClick={() => setOpen(false)}>Masuk</Link>
               </>
             ) : (
               <>
                 {dropdownItems.map(item => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="fn-m-link"
-                    onClick={() => setOpen(false)}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {item.icon} {item.label}
-                    </span>
+                  <Link key={item.label} href={item.href} className="fn-m-link" onClick={() => setOpen(false)}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{item.icon} {item.label}</span>
                     <ArrowRight size={15} strokeWidth={1.8} />
                   </Link>
                 ))}

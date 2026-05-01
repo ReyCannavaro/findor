@@ -36,10 +36,10 @@ const cols = [
   { title: 'Platform', links: [
     { label: 'Cari Vendor', href: '/search' },
     { label: 'Kategori', href: '/search' },
-    { label: 'Cara Kerja', href: '/how-it-works' },
+    { label: 'Findor Prime', href: '#' },
   ]},
   { title: 'Perusahaan', links: [
-    { label: 'Tentang Kami', href: '/about' },
+    { label: 'Tentang Kami', href: '#' },
     { label: 'Karier', href: '#' },
     { label: 'Kontak', href: '#' },
   ]},
@@ -54,16 +54,17 @@ const cols = [
 export default function Footer() {
   return (
     <footer>
-      {/* Gradient divider */}
       <div style={{ height: '80px', background: 'linear-gradient(to bottom, #f5f5f0, #ffffff)' }} />
 
       <div style={{ background: '#ffffff' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px 40px', boxSizing: 'border-box' as const }}>
+
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '48px', alignItems: 'flex-start' }}>
+
             <div>
               <img src="/logo_findor.jpg" alt="Findor" style={{ height: 48, width: 'auto', objectFit: 'contain', marginBottom: 12 }} />
               <p style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.8, marginTop: '0', marginBottom: '20px', maxWidth: '240px' }}>
-                Platform pencarian vendor event premium. Menghubungkan penyelenggara dengan vendor terpercaya di seluruh Indonesia.
+                Pasar kurasi untuk vendor event premium. Menghubungkan penyelenggara dengan vendor terpercaya, suara, dan destinasi terbaik.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {socials.map(s => (
@@ -95,7 +96,7 @@ export default function Footer() {
 
           <div style={{ borderTop: '1px solid #e5e7eb', marginTop: '48px', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <p style={{ fontSize: '11px', color: '#9ca3af' }}>
-              © {new Date().getFullYear()} Findor Marketplace · Find Your Vendor.
+              © 2024 Findor Marketplace · The Curated Gallery for Premium Events.
             </p>
             <div style={{ display: 'flex', gap: '20px' }}>
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(l => (
