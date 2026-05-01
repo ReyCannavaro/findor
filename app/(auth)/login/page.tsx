@@ -1,10 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') ?? '/';
@@ -267,3 +267,10 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
   transition: 'border-color 0.2s, box-shadow 0.2s',
 };
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0d3b2e' }} />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
