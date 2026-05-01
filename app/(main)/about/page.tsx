@@ -19,14 +19,14 @@ const VALUES = [
 ];
 
 const TEAM = [
-  { name: 'Reyjuno Al Cannvaro', role: 'Co-Founder & CEO', img: '/team/arya.jpg' },
-  { name: 'Raffi Akbar Baihaqy', role: 'Co-Founder & CPO', img: '/team/nadira.jpg' },
-  { name: 'Arga Fikri Akbar', role: 'Head of Curation', img: '/team/reza.jpg' },
-  { name: 'Abbiyu Putra Praditama', role: 'Head of Vendor Relations', img: '/team/sinta.jpg' },
+  { name: 'Reyjuno Al Cannvaro', role: 'Co-Founder & CEO', img: '/team/rey.jpg' },
+  { name: 'Raffi Akbar Baihaqy', role: 'Co-Founder & CPO', img: '/team/raffi.jpg' },
+  { name: 'Arga Fikri Akbar', role: 'Head of Curation', img: '/team/arga.jpg' },
+  { name: 'Abbiyu Putra Praditama', role: 'Head of Vendor Relations', img: '/team/bayu.jpg' },
 ];
 
 const MILESTONES = [
-  { year: '2022', title: 'Findor Didirikan', desc: 'Lahir di Jakarta dengan misi menghubungkan klien dan vendor event berkualitas.' },
+  { year: '2022', title: 'Findor Didirikan', desc: 'Lahir di Sidoarjo dengan misi menghubungkan klien dan vendor event berkualitas.' },
   { year: '2023', title: 'Ekspansi 10 Kota', desc: 'Hadir di Surabaya, Bandung, Bali, Medan, dan 6 kota besar lainnya.' },
   { year: '2024', title: '500+ Vendor Aktif', desc: 'Melampaui 500 vendor terverifikasi dengan tingkat kepuasan klien 99%.' },
   { year: '2025', title: '34 Kota Indonesia', desc: 'Menjadi platform vendor event terluas dengan jangkauan nasional.' },
@@ -93,7 +93,7 @@ export default function AboutPage() {
               <strong style={{ color: 'var(--text-primary)' }}>hanya vendor yang benar-benar layak yang boleh tampil</strong>.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {['Didirikan di Sidoarjo, 2024', 'Hadir di 34 kota Indonesia', 'Didukung 2.400+ vendor terverifikasi'].map(t => (
+              {['Didirikan di Sidoarjo, 2022', 'Hadir di 34 kota Indonesia', 'Didukung 2.400+ vendor terverifikasi'].map(t => (
                 <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <CheckCircle size={15} color="var(--verified-green)" />
                   <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{t}</span>
@@ -108,7 +108,7 @@ export default function AboutPage() {
               <MapPin size={16} color="var(--amber)" />
               <div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Berbasis di</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--white)' }}>Jakarta, Indonesia</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--white)' }}>Sidoarjo, Indonesia</div>
               </div>
             </div>
           </div>
