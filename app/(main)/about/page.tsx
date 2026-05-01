@@ -54,7 +54,7 @@ export default function AboutPage() {
             Findor adalah platform kurasi vendor event premium pertama di Indonesia — menghubungkan penyelenggara acara dengan vendor terbaik yang telah terverifikasi secara ketat.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/browse" className="btn-primary" style={{ fontSize: 14, padding: '11px 24px' }}>
+            <Link href="/search" className="btn-primary" style={{ fontSize: 14, padding: '11px 24px' }}>
               Cari Vendor <ArrowRight size={15} />
             </Link>
             <Link href="/how-it-works" className="btn-secondary" style={{ fontSize: 14, padding: '11px 24px' }}>
@@ -192,7 +192,7 @@ export default function AboutPage() {
                 Jelajahi ratusan vendor premium yang sudah terverifikasi dan siap membantu acara Anda.
               </p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Link href="/browse" className="btn-primary" style={{ fontSize: 14, padding: '12px 28px' }}>
+                <Link href="/search" className="btn-primary" style={{ fontSize: 14, padding: '12px 28px' }}>
                   Cari Vendor <ArrowRight size={15} />
                 </Link>
                 <Link href="/how-it-works" className="btn-secondary" style={{ fontSize: 14, padding: '12px 28px' }}>
