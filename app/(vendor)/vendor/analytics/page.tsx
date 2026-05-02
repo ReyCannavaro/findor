@@ -14,6 +14,8 @@ import Navbar from '@/components/navbar';
 interface Booking {
   id: string;
   event_date: string;
+  event_name: string;
+  event_location: string;
   status: string;
   created_at: string;
   service: { id: string; name: string; category: string } | null;
@@ -76,7 +78,7 @@ function Sparkline({ data, color = '#0d3b2e' }: { data: number[]; color?: string
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
       <polyline points={pts} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={pts.split(' ').at(-1)!.split(',')[0]} cy={pts.split(' ').at(-1)!.split(',')[1]} r={3} fill={color} />
+      <circle cx={pts.split(' ')[pts.split(' ').length - 1].split(',')[0]} cy={pts.split(' ')[pts.split(' ').length - 1].split(',')[1]} r={3} fill={color} />
     </svg>
   );
 }
@@ -269,8 +271,8 @@ export default function VendorAnalyticsPage() {
   }));
 
   const sparkBookings = monthlyBookings.map(m => m.value);
-  const currentMonth  = monthlyBookings.at(-1)?.value ?? 0;
-  const prevMonth     = monthlyBookings.at(-2)?.value ?? 0;
+  const currentMonth  = monthlyBookings[monthlyBookings.length - 1]?.value ?? 0;
+  const prevMonth     = monthlyBookings[monthlyBookings.length - 2]?.value ?? 0;
   const serviceCounts: Record<string, { name: string; count: number; completed: number }> = {};
   bookings.forEach(b => {
     if (!b.service) return;
@@ -551,7 +553,7 @@ export default function VendorAnalyticsPage() {
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{r.user?.full_name ?? 'Pengguna'}</span>
                         <StarRating rating={r.rating} />
                       </div>
-                      {r.comment && <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.comment}</p>}
+                      {r.comment && <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5, overflow: 'hidden', maxHeight: '2.8em', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{r.comment}</p>}
                     </div>
                   ))}
                 </div>
