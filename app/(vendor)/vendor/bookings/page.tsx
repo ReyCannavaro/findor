@@ -240,10 +240,8 @@ function BookingDrawer({ booking, onClose, onAction, actionLoading }: {
           {booking.dp_proof_url && (
             <div style={{ background: '#f5f3ff', borderRadius: 14, padding: '14px 18px', marginBottom: 16, border: '1px solid #ddd6fe' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Bukti DP Pembayaran</div>
-              <a href={booking.dp_proof_url} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 10, background: '#7c3aed', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
-                <FileImage size={14} /> Lihat Bukti DP
-              </a>
+              {/* Buka detail booking via API yang sudah generate signed URL */}
+              <DpProofViewer bookingId={booking.id} />
               {booking.dp_verified_at && (
                 <div style={{ fontSize: 12, color: '#6d28d9', marginTop: 8 }}>✓ Diverifikasi pada {fmtDateShort(booking.dp_verified_at)}</div>
               )}
@@ -271,6 +269,49 @@ function BookingDrawer({ booking, onClose, onAction, actionLoading }: {
         </div>
       </div>
     </div>
+  );
+}
+
+function DpProofViewer({ bookingId }: { bookingId: string }) {
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/v1/bookings/${bookingId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) setSignedUrl(d.data?.dp_proof_signed_url ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [bookingId]);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 10, background: '#ede9fe', color: '#7c3aed', fontSize: 13, fontWeight: 600 }}>
+        <span style={{ width: 12, height: 12, border: '2px solid #c4b5fd', borderTopColor: '#7c3aed', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
+        Memuat bukti DP...
+      </div>
+    );
+  }
+
+  if (!signedUrl) {
+    return (
+      <div style={{ fontSize: 13, color: '#6d28d9', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <AlertCircle size={13} /> Gagal memuat bukti DP. Coba refresh halaman.
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={signedUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 10, background: '#7c3aed', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
+    >
+      <FileImage size={14} /> Lihat Bukti DP
+    </a>
   );
 }
 
@@ -457,7 +498,6 @@ export default function VendorBookingsPage() {
 
   const handleLogout = async () => {
     await fetch('/api/v1/auth/logout', { method: 'POST' });
-    localStorage.removeItem('user');
     router.replace('/login');
   };
 
@@ -468,6 +508,19 @@ export default function VendorBookingsPage() {
   );
 
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const handlePrevPage = () => {
+    if (page <= 1 || loading) return;
+    const newPage = page - 1;
+    setPage(newPage);
+    loadBookings(activeTab, newPage);
+  };
+
+  const handleNextPage = () => {
+    if (page >= totalPages || loading) return;
+    const newPage = page + 1;
+    setPage(newPage);
+    loadBookings(activeTab, newPage);
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--gray-50)', fontFamily: 'Inter, sans-serif' }}>
@@ -623,12 +676,16 @@ export default function VendorBookingsPage() {
 
           {totalPages > 1 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 28 }}>
-              <button onClick={() => { setPage(p => p - 1); loadBookings(activeTab, page - 1); }} disabled={page === 1 || loading}
+              <button
+                onClick={handlePrevPage}
+                disabled={page === 1 || loading}
                 style={{ padding: '8px 14px', borderRadius: 10, border: '1.5px solid var(--gray-200)', background: 'white', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', cursor: page === 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}>
                 <ChevronLeft size={15} /> Prev
               </button>
               <span style={{ fontSize: 13, color: 'var(--text-muted)', padding: '0 8px' }}>Halaman {page} / {totalPages}</span>
-              <button onClick={() => { setPage(p => p + 1); loadBookings(activeTab, page + 1); }} disabled={page === totalPages || loading}
+              <button
+                onClick={handleNextPage}
+                disabled={page === totalPages || loading}
                 style={{ padding: '8px 14px', borderRadius: 10, border: '1.5px solid var(--gray-200)', background: 'white', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', cursor: page === totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}>
                 Next <ChevronRight size={15} />
               </button>
@@ -654,7 +711,6 @@ export default function VendorBookingsPage() {
         />
       )}
 
-      {/* Toast */}
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       <style>{`
