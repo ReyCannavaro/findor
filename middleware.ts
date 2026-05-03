@@ -45,7 +45,22 @@ export async function middleware(request: NextRequest) {
   }
 
   if (VENDOR_ROUTES.some((r) => pathname.startsWith(r))) {
-    if (!user) return NextResponse.redirect(new URL("/login", request.url));
+    // Belum login → redirect ke login dengan redirect param
+    if (!user) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (!profile || profile.role !== "vendor") {
+      return NextResponse.redirect(new URL("/vendor/register", request.url));
+    }
+
     return supabaseResponse;
   }
 
