@@ -8,19 +8,16 @@ export type BookingStatus =
   | "cancelled";
 
 export type AvailabilityStatus = "available" | "full" | "off";
-
-export type UserRole = "guest" | "user" | "vendor" | "admin";
-
+export type UserRole = "user" | "vendor" | "admin";
 export interface UserProfile {
   id: string;
   email: string;
   full_name: string | null;
   avatar_url: string | null;
   phone: string | null;
-  is_email_verified: boolean;
   role: UserRole;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface VendorProfile {
@@ -35,8 +32,6 @@ export interface VendorProfile {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  ktp_url: string | null;
-  selfie_url: string | null;
   is_verified: boolean;
   is_active: boolean;
   rating_avg: number;
@@ -63,7 +58,7 @@ export interface Booking {
   id: string;
   vendor_id: string;
   user_id: string;
-  service_id: string;
+  service_id: string | null;
   event_date: string;
   event_name: string;
   event_location: string;
@@ -120,19 +115,34 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
+export interface MeResponse extends UserProfile {
+  vendor: Pick<
+    VendorProfile,
+    | "id"
+    | "store_name"
+    | "slug"
+    | "category"
+    | "city"
+    | "is_verified"
+    | "is_active"
+    | "rating_avg"
+    | "review_count"
+  > | null;
+}
+
 export interface VendorWithDetails extends VendorProfile {
   services: Service[];
   reviews: ReviewWithUser[];
 }
 
 export interface BookingWithDetails extends Booking {
-  vendor: Pick<VendorProfile, "id" | "store_name" | "whatsapp_number">;
-  service: Pick<Service, "id" | "name" | "category">;
-  user: Pick<UserProfile, "id" | "full_name" | "email">;
+  vendor: Pick<VendorProfile, "id" | "store_name" | "whatsapp_number"> | null;
+  service: Pick<Service, "id" | "name" | "category"> | null;
+  user: Pick<UserProfile, "id" | "full_name" | "email"> | null;
 }
 
 export interface ReviewWithUser extends Review {
-  user: Pick<UserProfile, "id" | "full_name" | "avatar_url">;
+  user: Pick<UserProfile, "id" | "full_name" | "avatar_url"> | null;
 }
 
 export interface VendorSearchParams {
@@ -142,8 +152,17 @@ export interface VendorSearchParams {
   price_min?: number;
   price_max?: number;
   rating_min?: number;
-  date?: string; // YYYY-MM-DD — hanya tampil vendor yang available
+  date?: string; // YYYY-MM-DD — hanya tampilkan vendor yang available di tanggal ini
   sort?: "rating" | "price_asc" | "price_desc" | "newest";
   page?: number;
   per_page?: number;
+}
+
+export interface SearchResult {
+  vendors: VendorProfile[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+  filters: VendorSearchParams;
 }
