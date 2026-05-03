@@ -444,7 +444,7 @@ export default function Navbar() {
             {!isLoggedIn ? (
               <>
                 <Link href="/login" className="fn-login">Masuk</Link>
-                <Link href="/vendor/dashboard" className="fn-cta">Daftarkan Layanan</Link>
+                <Link href="/vendor/register" className="fn-cta">Daftarkan Vendormu</Link>
               </>
             ) : (
               <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -496,7 +496,7 @@ export default function Navbar() {
             <div className="fn-m-sep" />
             {!isLoggedIn ? (
               <>
-                <Link href="/vendor/dashboard" className="fn-m-cta" onClick={() => setOpen(false)}>Daftarkan Layanan</Link>
+                <Link href="/vendor/register" className="fn-m-cta" onClick={() => setOpen(false)}>Daftarkan Layanan</Link>
                 <Link href="/login" className="fn-m-login" onClick={() => setOpen(false)}>Masuk</Link>
               </>
             ) : (
