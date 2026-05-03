@@ -1,12 +1,13 @@
 'use client';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Search, MapPin, Star, CheckCircle, ArrowRight, X,
   ChevronDown, SlidersHorizontal, Navigation,
   Music2, Volume2, Construction, Flower2, UtensilsCrossed,
   Clapperboard, Camera, Lightbulb, Mic2, Tent, Car,
-  Sparkles, Mail, LayoutGrid, Heart, Award,
+  Sparkles, Mail, LayoutGrid, Heart, Award, Loader2,
 } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
@@ -38,32 +39,48 @@ const KATEGORI = [
   { label: 'Undangan Digital', Icon: Mail },
 ];
 
-const VENDORS = [
-  { id: 'melody-aura-sound', name: 'Melody Aura Sound', kategori: 'Sound System', kota: 'Jakarta', lokasi: 'Sudirman, Jakarta', harga: 'Rp 15jt', rating: 4.9, ulasan: 241, verified: true, img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80', desc: 'Spesialis sound system profesional untuk berbagai skala acara.' },
-  { id: 'atelier-decor', name: 'Atelier Decor', kategori: 'Dekorasi & Florist', kota: 'Tangerang Selatan', lokasi: 'Tangerang Selatan', harga: 'Rp 45jt', rating: 5.0, ulasan: 92, verified: true, img: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&q=80', desc: 'Dekorasi floral dan art direction untuk pernikahan mewah.' },
-  { id: 'visual-soul-studio', name: 'Visual Soul Studio', kategori: 'Dokumentasi', kota: 'Jakarta', lokasi: 'Kemang, Jakarta', harga: 'Rp 20jt', rating: 4.8, ulasan: 180, verified: true, img: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600&q=80', desc: 'Dokumentasi sinematik berkualitas tinggi untuk momen berharga.' },
-  { id: 'savory-palette', name: 'Savory Palette', kategori: 'Catering', kota: 'Jakarta', lokasi: 'Kelapa Gading, Jakarta', harga: 'Rp 350rb', rating: 4.9, ulasan: 310, verified: true, img: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&q=80', desc: 'Catering premium dengan menu nusantara dan internasional.' },
-  { id: 'lumina-studio', name: 'Lumina Studio Jakarta', kategori: 'Photography', kota: 'Jakarta Selatan', lokasi: 'Senopati, Jakarta Selatan', harga: 'Rp 8.5jt', rating: 4.9, ulasan: 124, verified: true, img: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', desc: 'Studio fotografi pernikahan fine-art dengan sentuhan editorial.' },
-  { id: 'spark-pro-light', name: 'Spark Pro Light', kategori: 'Lighting Design', kota: 'Surabaya', lokasi: 'Surabaya Pusat', harga: 'Rp 12jt', rating: 4.7, ulasan: 67, verified: true, img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80', desc: 'Desain pencahayaan artistik untuk panggung dan venue.' },
-  { id: 'harmoni-wo', name: 'Harmoni Wedding Organizer', kategori: 'Wedding Organizer', kota: 'Bandung', lokasi: 'Dago, Bandung', harga: 'Rp 35jt', rating: 4.8, ulasan: 203, verified: true, img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80', desc: 'Wedding organizer berpengalaman dengan konsep yang personal.' },
-  { id: 'sonic-systems', name: 'Sonic Systems Pro', kategori: 'Sound System', kota: 'Surabaya', lokasi: 'Surabaya Timur', harga: 'Rp 18jt', rating: 4.6, ulasan: 55, verified: false, img: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&q=80', desc: 'Penyedia sound system skala besar untuk konser dan festival.' },
-  { id: 'bali-stage-co', name: 'Bali Stage Co.', kategori: 'Stage & Rigging', kota: 'Bali', lokasi: 'Seminyak, Bali', harga: 'Rp 55jt', rating: 4.9, ulasan: 88, verified: true, img: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80', desc: 'Konstruksi panggung dan rigging untuk event outdoor premium.' },
-  { id: 'jogja-entertainment', name: 'Jogja Entertainment', kategori: 'Hiburan & Musik', kota: 'Yogyakarta', lokasi: 'Sleman, Yogyakarta', harga: 'Rp 8jt', rating: 4.7, ulasan: 142, verified: true, img: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&q=80', desc: 'Penyedia hiburan live music dan pertunjukan seni budaya.' },
-  { id: 'malang-catering', name: 'Dapur Nusantara', kategori: 'Catering', kota: 'Malang', lokasi: 'Malang Kota', harga: 'Rp 200rb', rating: 4.5, ulasan: 76, verified: false, img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80', desc: 'Catering masakan nusantara autentik untuk acara keluarga.' },
-  { id: 'bandung-photo', name: 'Capture Moment Studio', kategori: 'Photography', kota: 'Bandung', lokasi: 'Braga, Bandung', harga: 'Rp 6jt', rating: 4.6, ulasan: 98, verified: true, img: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600&q=80', desc: 'Fotografer profesional spesialis prewedding dan pernikahan.' },
-];
+interface ServiceInfo {
+  id: string; name: string; category: string;
+  price_min: number; price_max: number | null; unit: string | null;
+}
 
-function CustomDropdown({ value, onChange, options, icon: TriggerIcon, placeholder }: {
+interface Vendor {
+  id: string;
+  store_name: string;
+  slug: string;
+  category: string;
+  description: string | null;
+  city: string;
+  rating_avg: number;
+  review_count: number;
+  is_verified: boolean;
+  services: ServiceInfo[];
+}
+
+function formatHarga(services: ServiceInfo[]): string {
+  if (!services || services.length === 0) return 'Hubungi vendor';
+  const minPrice = Math.min(...services.map(s => s.price_min));
+  if (minPrice >= 1_000_000) return `Rp ${(minPrice / 1_000_000).toFixed(0)}jt`;
+  if (minPrice >= 1_000) return `Rp ${(minPrice / 1_000).toFixed(0)}rb`;
+  return `Rp ${minPrice.toLocaleString('id-ID')}`;
+}
+
+const AVATAR_COLORS = ['#1C3D2E','#2D6A4F','#40916C','#1B4332','#0D3B2E'];
+function avatarColor(name: string) {
+  return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+}
+
+function CustomDropdown({ value, onChange, options, icon: TriggerIcon }: {
   value: string; onChange: (v: string) => void;
   options: { label: string; Icon?: React.ComponentType<{ size?: number; color?: string }> }[];
-  icon: React.ComponentType<{ size?: number; color?: string }>; placeholder?: string;
+  icon: React.ComponentType<{ size?: number; color?: string }>;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
   const selected = options.find(o => o.label === value);
   const SelectedIcon = selected?.Icon;
@@ -103,14 +120,17 @@ function KotaDropdown({ value, onChange }: { value: string; onChange: (v: string
   const [locLoading, setLocLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
 
   const handleDekatSaya = () => {
     setLocLoading(true);
-    navigator.geolocation?.getCurrentPosition(() => { onChange('Sidoarjo'); setLocLoading(false); setOpen(false); }, () => { setLocLoading(false); });
+    navigator.geolocation?.getCurrentPosition(
+      () => { onChange('Sidoarjo'); setLocLoading(false); setOpen(false); },
+      () => setLocLoading(false)
+    );
   };
 
   return (
@@ -143,43 +163,185 @@ function KotaDropdown({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
-export default function BrowsePage() {
-  const [pendingQuery, setPendingQuery] = useState('');
-  const [pendingKota, setPendingKota] = useState('Semua Kota');
-  const [pendingKategori, setPendingKategori] = useState('Semua Kategori');
-  const [pendingKategoriPill, setPendingKategoriPill] = useState('Semua Kategori');
-  const [appliedQuery, setAppliedQuery] = useState('');
-  const [appliedKota, setAppliedKota] = useState('Semua Kota');
-  const [appliedKategori, setAppliedKategori] = useState('Semua Kategori');
-  const resultsRef = useRef<HTMLElement>(null);
+function VendorCard({ v, isHighlighting, idx }: { v: Vendor; isHighlighting: boolean; idx: number }) {
+  return (
+    <Link href={`/vendor/${v.slug}`} style={{ textDecoration: 'none' }}>
+      <div
+        className={`browse-card${isHighlighting ? ' card-pop' : ''}`}
+        style={{ animationDelay: isHighlighting ? `${idx * 60}ms` : '0ms' }}
+      >
+        <div style={{ position: 'relative', height: 200, overflow: 'hidden', background: avatarColor(v.store_name) }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 48, fontWeight: 800, color: 'rgba(255,255,255,0.25)',
+            fontFamily: 'Fraunces, serif',
+          }}>
+            {v.store_name[0].toUpperCase()}
+          </div>
+
+          {v.is_verified && (
+            <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.95)', borderRadius: 999, padding: '4px 10px', backdropFilter: 'blur(6px)', zIndex: 2 }}>
+              <CheckCircle size={11} color="#16a34a" fill="#16a34a" />
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>TERVERIFIKASI</span>
+            </div>
+          )}
+          <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.95)', borderRadius: 999, padding: '4px 10px', backdropFilter: 'blur(6px)', zIndex: 2 }}>
+            <Star size={11} fill="#f97316" color="#f97316" />
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>
+              {v.rating_avg > 0 ? v.rating_avg.toFixed(1) : '—'}
+            </span>
+            {v.review_count > 0 && <span style={{ fontSize: 11, color: '#6b7280' }}>({v.review_count})</span>}
+          </div>
+          <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(13,59,46,0.88)', borderRadius: 999, padding: '4px 12px', zIndex: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>{v.category}</span>
+          </div>
+        </div>
+
+        <div style={{ padding: '18px 20px' }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 5, lineHeight: 1.3 }}>{v.store_name}</p>
+          <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6, marginBottom: 12,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {v.description ?? `${v.category} profesional di ${v.city}`}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
+            <MapPin size={12} color="#94a3b8" />
+            <span style={{ fontSize: 12, color: '#94a3b8' }}>{v.city}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+            <div>
+              <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 2 }}>Mulai dari</p>
+              <p style={{ fontSize: 16, fontWeight: 800, color: '#0d3b2e' }}>{formatHarga(v.services)}</p>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#0d3b2e', display: 'flex', alignItems: 'center', gap: 4 }}>
+              Lihat Portfolio <ArrowRight size={13} />
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{ background: 'white', borderRadius: 18, overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+      <div style={{ height: 200, background: 'linear-gradient(90deg,#f0f0ec 25%,#e8e8e4 50%,#f0f0ec 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }} />
+      <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ height: 18, width: '70%', borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+        <div style={{ height: 13, width: '100%', borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+        <div style={{ height: 13, width: '60%', borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+        <div style={{ height: 1, background: '#f1f5f9', margin: '4px 0' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ height: 20, width: 80, borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+          <div style={{ height: 20, width: 100, borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const [pendingQuery,    setPendingQuery]    = useState(searchParams.get('q') ?? '');
+  const [pendingKota,     setPendingKota]     = useState(searchParams.get('city') ?? 'Semua Kota');
+  const [pendingKategori, setPendingKategori] = useState(searchParams.get('category') ?? 'Semua Kategori');
+  const [pendingKategoriPill, setPendingKategoriPill] = useState(searchParams.get('category') ?? 'Semua Kategori');
+  const [appliedQuery,    setAppliedQuery]    = useState(searchParams.get('q') ?? '');
+  const [appliedKota,     setAppliedKota]     = useState(searchParams.get('city') ?? 'Semua Kota');
+  const [appliedKategori, setAppliedKategori] = useState(searchParams.get('category') ?? 'Semua Kategori');
+  const [vendors,    setVendors]    = useState<Vendor[]>([]);
+  const [total,      setTotal]      = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page,       setPage]       = useState(1);
+  const [loading,    setLoading]    = useState(true);
   const [isHighlighting, setIsHighlighting] = useState(false);
 
-  const hasPendingChange = pendingQuery !== appliedQuery || pendingKota !== appliedKota || pendingKategori !== appliedKategori;
+  const resultsRef = useRef<HTMLElement>(null);
 
-  const hasil = useMemo(() => VENDORS.filter(v => {
-    const cocokQuery = !appliedQuery || v.name.toLowerCase().includes(appliedQuery.toLowerCase()) || v.kategori.toLowerCase().includes(appliedQuery.toLowerCase()) || v.desc.toLowerCase().includes(appliedQuery.toLowerCase());
-    const cocokKota = appliedKota === 'Semua Kota' || v.kota === appliedKota;
-    const cocokKategori = appliedKategori === 'Semua Kategori' || v.kategori === appliedKategori;
-    return cocokQuery && cocokKota && cocokKategori;
-  }), [appliedQuery, appliedKota, appliedKategori]);
+  const hasPendingChange =
+    pendingQuery !== appliedQuery ||
+    pendingKota  !== appliedKota  ||
+    pendingKategori !== appliedKategori;
+
+  const hasAppliedFilter =
+    appliedQuery ||
+    appliedKota     !== 'Semua Kota' ||
+    appliedKategori !== 'Semua Kategori';
+
+  const fetchVendors = useCallback(async (
+    q: string, city: string, category: string, p: number
+  ) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(p), per_page: '12', sort: 'rating' });
+      if (q && q.trim())                        params.set('q', q.trim());
+      if (city && city !== 'Semua Kota')        params.set('city', city);
+      if (category && category !== 'Semua Kategori') params.set('category', category);
+
+      const res  = await fetch(`/api/v1/search?${params}`);
+      const data = await res.json();
+      if (data.success) {
+        setVendors(data.data.vendors ?? []);
+        setTotal(data.data.total ?? 0);
+        setTotalPages(data.data.total_pages ?? 1);
+      }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    fetchVendors(appliedQuery, appliedKota, appliedKategori, page);
+  }, [appliedQuery, appliedKota, appliedKategori, page, fetchVendors]);
+
+  useEffect(() => {
+    fetchVendors(appliedQuery, appliedKota, appliedKategori, 1);
+  }, []);
 
   const handleCari = () => {
+    setPage(1);
     setAppliedQuery(pendingQuery);
     setAppliedKota(pendingKota);
     setAppliedKategori(pendingKategori);
+    const params = new URLSearchParams();
+    if (pendingQuery)                          params.set('q',        pendingQuery);
+    if (pendingKota !== 'Semua Kota')          params.set('city',     pendingKota);
+    if (pendingKategori !== 'Semua Kategori')  params.set('category', pendingKategori);
+    router.replace(`/search${params.toString() ? '?' + params.toString() : ''}`, { scroll: false });
+
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => { setIsHighlighting(true); setTimeout(() => setIsHighlighting(false), 900); }, 650);
     }, 80);
   };
 
-  const handlePillClick = (label: string) => { setPendingKategoriPill(label); setPendingKategori(label); };
-
-  const hasAppliedFilter = appliedQuery || appliedKota !== 'Semua Kota' || appliedKategori !== 'Semua Kategori';
+  const handlePillClick = (label: string) => {
+    setPendingKategoriPill(label);
+    setPendingKategori(label);
+  };
 
   const handleReset = () => {
     setPendingQuery(''); setPendingKota('Semua Kota'); setPendingKategori('Semua Kategori'); setPendingKategoriPill('Semua Kategori');
     setAppliedQuery(''); setAppliedKota('Semua Kota'); setAppliedKategori('Semua Kategori');
+    setPage(1);
+    router.replace('/search', { scroll: false });
+  };
+
+  const removeFilter = (type: 'q' | 'city' | 'category') => {
+    const newQ    = type === 'q'        ? '' : appliedQuery;
+    const newCity = type === 'city'     ? 'Semua Kota' : appliedKota;
+    const newCat  = type === 'category' ? 'Semua Kategori' : appliedKategori;
+    if (type === 'q')        { setPendingQuery(''); setAppliedQuery(''); }
+    if (type === 'city')     { setPendingKota('Semua Kota'); setAppliedKota('Semua Kota'); }
+    if (type === 'category') { setPendingKategori('Semua Kategori'); setPendingKategoriPill('Semua Kategori'); setAppliedKategori('Semua Kategori'); }
+    setPage(1);
+    const params = new URLSearchParams();
+    if (newQ)                         params.set('q',        newQ);
+    if (newCity !== 'Semua Kota')     params.set('city',     newCity);
+    if (newCat  !== 'Semua Kategori') params.set('category', newCat);
+    router.replace(`/search${params.toString() ? '?' + params.toString() : ''}`, { scroll: false });
   };
 
   return (
@@ -199,17 +361,25 @@ export default function BrowsePage() {
               <em style={{ fontStyle: 'italic', color: '#f5a623', fontWeight: 300 }}>untuk Acara Anda</em>
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', maxWidth: 460 }}>
-              {VENDORS.length}+ vendor terverifikasi siap membantu mewujudkan acara impian Anda di seluruh Indonesia.
+              {loading ? '...' : `${total}+`} vendor terverifikasi siap membantu mewujudkan acara impian Anda di seluruh Indonesia.
             </p>
           </div>
 
           <div style={{ animation: 'fadeUp 0.7s 0.22s both' }}>
             <div style={{ background: 'white', borderRadius: 18, padding: '16px 20px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', boxShadow: '0 20px 60px rgba(0,0,0,0.22)', maxWidth: 900 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 220px', padding: '9px 14px', borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fafafa' }}
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 220px', padding: '9px 14px', borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fafafa' }}
                 onFocusCapture={e => (e.currentTarget.style.borderColor = '#0d3b2e')}
-                onBlurCapture={e => (e.currentTarget.style.borderColor = '#e5e7eb')}>
+                onBlurCapture={e => (e.currentTarget.style.borderColor = '#e5e7eb')}
+              >
                 <Search size={15} color="#9ca3af" strokeWidth={2} />
-                <input value={pendingQuery} onChange={e => setPendingQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCari()} placeholder="Cari nama vendor atau layanan..." style={{ border: 'none', outline: 'none', flex: 1, fontSize: 14, color: '#111827', background: 'transparent', fontFamily: 'inherit' }} />
+                <input
+                  value={pendingQuery}
+                  onChange={e => setPendingQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCari()}
+                  placeholder="Cari nama vendor atau layanan..."
+                  style={{ border: 'none', outline: 'none', flex: 1, fontSize: 14, color: '#111827', background: 'transparent', fontFamily: 'inherit' }}
+                />
                 {pendingQuery && <button onClick={() => setPendingQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#9ca3af' }}><X size={14} /></button>}
               </div>
 
@@ -221,13 +391,15 @@ export default function BrowsePage() {
                 <KotaDropdown value={pendingKota} onChange={setPendingKota} />
               </div>
 
-              <button onClick={handleCari} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px', borderRadius: 12, background: hasPendingChange ? '#0d3b2e' : '#1a5c44', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: hasPendingChange ? '0 4px 14px rgba(13,59,46,0.35)' : 'none', transform: hasPendingChange ? 'scale(1.02)' : 'scale(1)' }}>
+              <button
+                onClick={handleCari}
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px', borderRadius: 12, background: hasPendingChange ? '#0d3b2e' : '#1a5c44', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: hasPendingChange ? '0 4px 14px rgba(13,59,46,0.35)' : 'none', transform: hasPendingChange ? 'scale(1.02)' : 'scale(1)' }}
+              >
                 <Search size={15} /> Cari Vendor
               </button>
             </div>
           </div>
 
-          {/* Kategori Pills */}
           <div style={{ marginTop: 22, display: 'flex', gap: 8, flexWrap: 'wrap', animation: 'fadeUp 0.7s 0.35s both' }}>
             {KATEGORI.slice(0, 8).map(({ label, Icon }) => {
               const isActive = pendingKategoriPill === label;
@@ -242,18 +414,38 @@ export default function BrowsePage() {
       </section>
 
       <section ref={resultsRef} className={isHighlighting ? 'results-highlight' : ''} style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px 80px', borderRadius: 20, transition: 'background 0.3s' }}>
+        {/* Result header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
-              {hasil.length} vendor ditemukan
-              {hasAppliedFilter && <span style={{ fontWeight: 400, color: '#64748b', fontSize: 14 }}> — dari filter yang dipilih</span>}
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {loading
+                ? <><Loader2 size={16} style={{ animation: 'spin 0.7s linear infinite' }} /> Mencari vendor...</>
+                : <>{total} vendor ditemukan{hasAppliedFilter && <span style={{ fontWeight: 400, color: '#64748b', fontSize: 14 }}> — dari filter yang dipilih</span>}</>
+              }
             </p>
             {hasAppliedFilter && (
               <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                {appliedQuery && <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 999, fontWeight: 600, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: 5 }}><Search size={10} /> &quot;{appliedQuery}&quot; <button onClick={() => { setAppliedQuery(''); setPendingQuery(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#16a34a' }}><X size={10} /></button></span>}
-                {appliedKategori !== 'Semua Kategori' && <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 999, fontWeight: 600, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: 5 }}><SlidersHorizontal size={10} /> {appliedKategori} <button onClick={() => { setAppliedKategori('Semua Kategori'); setPendingKategori('Semua Kategori'); setPendingKategoriPill('Semua Kategori'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#16a34a' }}><X size={10} /></button></span>}
-                {appliedKota !== 'Semua Kota' && <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 999, fontWeight: 600, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={10} /> {appliedKota} <button onClick={() => { setAppliedKota('Semua Kota'); setPendingKota('Semua Kota'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#16a34a' }}><X size={10} /></button></span>}
-                <button onClick={handleReset} style={{ fontSize: 12, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}><X size={11} /> Reset semua filter</button>
+                {appliedQuery && (
+                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 999, fontWeight: 600, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Search size={10} /> &quot;{appliedQuery}&quot;
+                    <button onClick={() => removeFilter('q')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#16a34a' }}><X size={10} /></button>
+                  </span>
+                )}
+                {appliedKategori !== 'Semua Kategori' && (
+                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 999, fontWeight: 600, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <SlidersHorizontal size={10} /> {appliedKategori}
+                    <button onClick={() => removeFilter('category')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#16a34a' }}><X size={10} /></button>
+                  </span>
+                )}
+                {appliedKota !== 'Semua Kota' && (
+                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 999, fontWeight: 600, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <MapPin size={10} /> {appliedKota}
+                    <button onClick={() => removeFilter('city')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#16a34a' }}><X size={10} /></button>
+                  </span>
+                )}
+                <button onClick={handleReset} style={{ fontSize: 12, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <X size={11} /> Reset semua filter
+                </button>
               </div>
             )}
           </div>
@@ -262,84 +454,68 @@ export default function BrowsePage() {
           </div>
         </div>
 
-        {hasil.length === 0 ? (
+        {loading ? (
+          <div className="browse-grid">
+            {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : vendors.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <div style={{ width: 56, height: 56, background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}><Search size={24} color="#94a3b8" /></div>
+            <div style={{ width: 56, height: 56, background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <Search size={24} color="#94a3b8" />
+            </div>
             <p style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>Vendor tidak ditemukan</p>
             <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>Coba ubah kata kunci, kategori, atau kota yang Anda cari.</p>
-            <button onClick={handleReset} style={{ padding: '11px 28px', borderRadius: 999, background: '#0d3b2e', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Tampilkan Semua Vendor</button>
+            <button onClick={handleReset} style={{ padding: '11px 28px', borderRadius: 999, background: '#0d3b2e', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+              Tampilkan Semua Vendor
+            </button>
           </div>
         ) : (
-          <div className="browse-grid">
-            {hasil.map((v, idx) => (
-              <Link key={v.id} href={`/vendor/${v.id}`} style={{ textDecoration: 'none' }}>
-                <div className={`browse-card${isHighlighting ? ' card-pop' : ''}`} style={{ animationDelay: isHighlighting ? `${idx * 60}ms` : '0ms' }}>
-                  <div style={{ position: 'relative', height: 200, overflow: 'hidden', background: '#e5e7eb' }}>
-                    <img src={v.img} alt={v.name} className="browse-card-img" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.45s ease' }} />
-                    {v.verified && (
-                      <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.95)', borderRadius: 999, padding: '4px 10px', backdropFilter: 'blur(6px)' }}>
-                        <CheckCircle size={11} color="#16a34a" fill="#16a34a" />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>TERVERIFIKASI</span>
-                      </div>
-                    )}
-                    <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.95)', borderRadius: 999, padding: '4px 10px', backdropFilter: 'blur(6px)' }}>
-                      <Star size={11} fill="#f97316" color="#f97316" />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>{v.rating}</span>
-                      <span style={{ fontSize: 11, color: '#6b7280' }}>({v.ulasan})</span>
-                    </div>
-                    <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(13,59,46,0.88)', borderRadius: 999, padding: '4px 12px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>{v.kategori}</span>
-                    </div>
-                  </div>
-                  <div style={{ padding: '18px 20px' }}>
-                    <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 5, lineHeight: 1.3 }}>{v.name}</p>
-                    <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6, marginBottom: 12 }}>{v.desc}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
-                      <MapPin size={12} color="#94a3b8" />
-                      <span style={{ fontSize: 12, color: '#94a3b8' }}>{v.lokasi}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
-                      <div>
-                        <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 2 }}>Mulai dari</p>
-                        <p style={{ fontSize: 16, fontWeight: 800, color: '#0d3b2e' }}>{v.harga}</p>
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#0d3b2e', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        Lihat Portfolio <ArrowRight size={13} />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="browse-grid">
+              {vendors.map((v, idx) => (
+                <VendorCard key={v.id} v={v} isHighlighting={isHighlighting} idx={idx} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 40 }}>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  style={{ padding: '10px 20px', borderRadius: 100, border: '1px solid #e5e7eb', background: 'white', fontSize: 13, fontWeight: 600, color: page === 1 ? '#d1d5db' : '#374151', cursor: page === 1 ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}
+                >
+                  ← Sebelumnya
+                </button>
+                <span style={{ fontSize: 13, color: '#94a3b8', padding: '0 8px' }}>{page} / {totalPages}</span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  style={{ padding: '10px 20px', borderRadius: 100, border: '1px solid #e5e7eb', background: 'white', fontSize: 13, fontWeight: 600, color: page === totalPages ? '#d1d5db' : '#374151', cursor: page === totalPages ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}
+                >
+                  Berikutnya →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
       <Footer />
 
       <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes sectionFlash {
-          0%   { background: transparent; }
-          30%  { background: rgba(13, 59, 46, 0.06); }
-          100% { background: transparent; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,800;1,9..144,300&display=swap');
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        @keyframes spin     { to{transform:rotate(360deg)} }
+        @keyframes sectionFlash { 0%{background:transparent} 30%{background:rgba(13,59,46,0.06)} 100%{background:transparent} }
+        @keyframes cardPop  { 0%{transform:translateY(10px) scale(0.98);opacity:0.6} 60%{transform:translateY(-3px) scale(1.01);opacity:1} 100%{transform:translateY(0) scale(1);opacity:1} }
         .results-highlight { animation: sectionFlash 0.9s ease forwards; }
-        @keyframes cardPop {
-          0%   { transform: translateY(10px) scale(0.98); opacity: 0.6; }
-          60%  { transform: translateY(-3px) scale(1.01); opacity: 1; }
-          100% { transform: translateY(0) scale(1); opacity: 1; }
-        }
         .card-pop { animation: cardPop 0.4s ease both; }
         .browse-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .browse-card { background: white; border-radius: 18px; overflow: hidden; border: 1px solid #f1f5f9; transition: transform 0.25s ease, box-shadow 0.25s ease; cursor: pointer; }
         .browse-card:hover { transform: translateY(-5px); box-shadow: 0 16px 48px rgba(0,0,0,0.10); }
-        .browse-card:hover .browse-card-img { transform: scale(1.06); }
-        @media (max-width: 1024px) { .browse-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .browse-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1024px) { .browse-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 640px)  { .browse-grid { grid-template-columns: 1fr; } }
       `}</style>
     </main>
   );

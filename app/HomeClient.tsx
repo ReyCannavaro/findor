@@ -54,12 +54,13 @@ const CATEGORIES_SMALL = [
   { icon: <Music size={20} />, label: 'Entertainment', count: 64, image: '/categories/entertainment.jpg' },
 ];
 
-const POPULAR_VENDORS = [
-  { name: 'Melody Aura Sound', category: 'Sound & Audio Specialist', location: 'Suleman, Jakarta', price: 'Rp 15jt', rating: 4.9, reviews: 241, img: '/vendors/melody.jpg' },
-  { name: 'Atelier Decor', category: 'Floral & Art Direction', location: 'Tangerang Selatan', price: 'Rp 45jt', rating: 5.0, reviews: 92, img: '/vendors/atelier.jpg' },
-  { name: 'Visual Soul Studio', category: 'Cinematic Documentation', location: 'Kemang, Jakarta', price: 'Rp 20jt', rating: 4.8, reviews: 180, img: '/vendors/visual.jpg' },
-  { name: 'Savory Palette', category: 'Premium Catering Group', location: 'Kelion Jenal, Jakarta', price: 'Rp 350rb', rating: 4.9, reviews: 310, img: '/vendors/savory.jpg' },
-];
+// Tipe untuk vendor dari API
+interface ApiVendor {
+  id: string; store_name: string; slug: string;
+  category: string; description: string | null; city: string;
+  rating_avg: number; review_count: number; is_verified: boolean;
+  services: { id: string; price_min: number; price_max: number | null }[];
+}
 
 const TRUST_ITEMS = [
   { icon: <Shield size={18} />, title: 'Garansi Layanan', desc: 'Dana kembali 100% jika vendor tidak hadir di hari H.' },
@@ -305,11 +306,29 @@ function HeroSection() {
   );
 }
 
+function formatHarga(services: { price_min: number }[]): string {
+  if (!services || services.length === 0) return 'Hubungi vendor';
+  const min = Math.min(...services.map(s => s.price_min));
+  if (min >= 1_000_000) return `Rp ${(min / 1_000_000).toFixed(0)}jt`;
+  if (min >= 1_000) return `Rp ${(min / 1_000).toFixed(0)}rb`;
+  return `Rp ${min.toLocaleString('id-ID')}`;
+}
+
 export default function HomeClient() {
   const router = useRouter();
+  const [popularVendors, setPopularVendors] = useState<ApiVendor[]>([]);
+  const [vendorLoading, setVendorLoading] = useState(true);
 
-  const handleViewDetail = (id: string) => {
-    router.push(`/vendor/${id}`);
+  useEffect(() => {
+    fetch('/api/v1/search?sort=rating&per_page=4')
+      .then(r => r.json())
+      .then(d => { if (d.success) setPopularVendors(d.data.vendors ?? []); })
+      .catch(() => {})
+      .finally(() => setVendorLoading(false));
+  }, []);
+
+  const handleViewDetail = (slug: string) => {
+    router.push(`/vendor/${slug}`);
   };
 
   return (
@@ -438,31 +457,45 @@ export default function HomeClient() {
           </div>
 
           <div className="vendor-grid">
-            {POPULAR_VENDORS.map(v => {
-              const slug = v.name.toLowerCase().replace(/\s+/g, '-');
-              return (
-                <div key={v.name} className="vendor-card">
-                  <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
-                    <img src={v.img} alt={v.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }}
-                      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
-                      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')} />
-                    <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(255,255,255,0.9)', borderRadius: 'var(--radius-full)', padding: '3px 8px', fontSize: 12, fontWeight: 700, color: 'var(--forest)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <Star size={10} fill="var(--amber)" color="var(--amber)" /> {v.rating}
+            {vendorLoading
+              ? Array(4).fill(0).map((_, i) => (
+                  <div key={i} className="vendor-card" style={{ overflow: 'hidden' }}>
+                    <div style={{ aspectRatio: '4/3', background: 'linear-gradient(90deg,#f0f0ec 25%,#e8e8e4 50%,#f0f0ec 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }} />
+                    <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ height: 16, width: '70%', borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+                      <div style={{ height: 13, width: '50%', borderRadius: 6, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
+                      <div style={{ height: 34, width: '100%', borderRadius: 100, background: '#f0f0ec', animation: 'shimmer 1.5s infinite' }} />
                     </div>
                   </div>
+                ))
+              : popularVendors.map(v => (
+                <div key={v.id} className="vendor-card">
+                  <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', background: '#1C3D2E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 48, fontWeight: 800, color: 'rgba(255,255,255,0.2)', fontFamily: 'Fraunces, serif' }}>
+                      {v.store_name[0].toUpperCase()}
+                    </span>
+                    <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(255,255,255,0.9)', borderRadius: 'var(--radius-full)', padding: '3px 8px', fontSize: 12, fontWeight: 700, color: 'var(--forest)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Star size={10} fill="var(--amber)" color="var(--amber)" /> {v.rating_avg > 0 ? v.rating_avg.toFixed(1) : '—'}
+                    </div>
+                    {v.is_verified && (
+                      <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255,255,255,0.9)', borderRadius: 'var(--radius-full)', padding: '3px 8px', fontSize: 11, fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        ✓ Verified
+                      </div>
+                    )}
+                  </div>
                   <div style={{ padding: 16 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 2 }}>{v.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 2 }}>{v.store_name}</div>
                     <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>{v.category}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-                      <MapPin size={11} /> {v.location}
+                      <MapPin size={11} /> {v.city}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Starts from</span>
-                        <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--forest)' }}>{v.price}</div>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--forest)' }}>{formatHarga(v.services)}</div>
                       </div>
                       <button
-                        onClick={() => handleViewDetail(slug)}
+                        onClick={() => handleViewDetail(v.slug)}
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 6,
                           fontSize: 12, fontWeight: 600, color: 'var(--forest)',
@@ -475,8 +508,8 @@ export default function HomeClient() {
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))
+            }
           </div>
         </div>
 
