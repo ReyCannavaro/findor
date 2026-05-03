@@ -7,7 +7,7 @@ import {
   CalendarDays, MapPin, Clock, CheckCircle2, XCircle,
   AlertCircle, ChevronRight, Package, ArrowRight,
   Upload, Star, X, Loader2, FileText, Phone,
-  MessageSquare, RefreshCw,
+  MessageSquare, RefreshCw, TriangleAlert, Send,
 } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
@@ -428,16 +428,131 @@ function DetailModal({ booking, onClose }: { booking: Booking; onClose: () => vo
   );
 }
 
+function CancelConfirmedModal({
+  booking,
+  onClose,
+  onCancelled,
+}: {
+  booking: Booking;
+  onClose: () => void;
+  onCancelled: () => void;
+}) {
+  const [reason, setReason]     = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+
+  const waLink = `https://wa.me/${booking.vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(
+    `Halo ${booking.vendor.store_name}, saya ingin membatalkan booking untuk event "${booking.event_name}". Mohon bantuannya.`
+  )}`;
+
+  const handleSubmit = async () => {
+    if (!reason.trim()) { setError('Alasan pembatalan wajib diisi.'); return; }
+    setLoading(true); setError('');
+    try {
+      const res = await fetch(`/api/v1/bookings/${booking.id}/cancel`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancellation_reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) { onCancelled(); onClose(); }
+      else setError(data.error ?? 'Terjadi kesalahan.');
+    } catch { setError('Tidak dapat terhubung ke server.'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: 'white', borderRadius: 20, width: '100%', maxWidth: 480, boxShadow: '0 24px 80px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '22px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#fef2f2', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <TriangleAlert size={20} color="#dc2626" />
+            </div>
+            <div>
+              <p style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', marginBottom: 3 }}>Batalkan Booking?</p>
+              <p style={{ fontSize: 13, color: '#64748b' }}>{booking.event_name} · {booking.vendor.store_name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <X size={16} color="#374151" />
+          </button>
+        </div>
+
+        <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Warning info */}
+          <div style={{ padding: '12px 14px', background: '#fffbeb', borderRadius: 12, border: '1px solid #fde68a', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <AlertCircle size={15} color="#d97706" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div style={{ fontSize: 13, color: '#92400e', lineHeight: 1.6 }}>
+              <strong>Perhatian:</strong> Booking ini sudah <strong>dikonfirmasi vendor</strong>. Pembatalan di tahap ini belum melibatkan DP, namun sebaiknya kamu menghubungi vendor terlebih dahulu untuk koordinasi.
+            </div>
+          </div>
+
+          {/* WA shortcut */}
+          <a href={waLink} target="_blank" rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', background: '#f0fdf4', borderRadius: 12, border: '1px solid #bbf7d0', textDecoration: 'none', color: '#15803d', fontSize: 13.5, fontWeight: 600 }}>
+            <MessageSquare size={16} color="#16a34a" />
+            Hubungi {booking.vendor.store_name} via WhatsApp dulu
+          </a>
+
+          {/* Reason input */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 7 }}>
+              Alasan Pembatalan <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <textarea
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="Contoh: Ada perubahan tanggal acara, vendor lain sudah dipilih, dll."
+              maxLength={500}
+              rows={3}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1.5px solid ${error ? '#fca5a5' : '#e5e7eb'}`, fontSize: 13.5, fontFamily: 'inherit', color: '#0f172a', background: '#fafafa', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box', transition: 'border-color 0.18s' }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#0d3b2e'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = error ? '#fca5a5' : '#e5e7eb'; }}
+            />
+            <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, textAlign: 'right' }}>{reason.length}/500</p>
+          </div>
+
+          {error && (
+            <div style={{ padding: '10px 14px', background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca', fontSize: 13, color: '#dc2626', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <AlertCircle size={14} /> {error}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose}
+              style={{ flex: 1, padding: '12px 0', borderRadius: 10, background: '#f1f5f9', color: '#374151', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Kembali
+            </button>
+            <button onClick={handleSubmit} disabled={loading || !reason.trim()}
+              style={{ flex: 1, padding: '12px 0', borderRadius: 10, background: loading || !reason.trim() ? '#9ca3af' : '#dc2626', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: loading || !reason.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: 'inherit', transition: 'background 0.2s' }}>
+              {loading
+                ? <><Loader2 size={14} style={{ animation: 'spin 0.7s linear infinite' }} /> Membatalkan...</>
+                : <><Send size={14} /> Ya, Batalkan Booking</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BookingCard({
   booking, onRefresh,
 }: {
   booking: Booking;
   onRefresh: () => void;
 }) {
-  const [uploadOpen, setUploadOpen]   = useState(false);
-  const [reviewOpen, setReviewOpen]   = useState(false);
-  const [detailOpen, setDetailOpen]   = useState(false);
-  const [cancelling, setCancelling]   = useState(false);
+  const [uploadOpen, setUploadOpen]         = useState(false);
+  const [reviewOpen, setReviewOpen]         = useState(false);
+  const [detailOpen, setDetailOpen]         = useState(false);
+  const [cancelling, setCancelling]         = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   const handleCancel = async () => {
     if (!confirm('Yakin ingin membatalkan booking ini?')) return;
@@ -550,7 +665,12 @@ function BookingCard({
               fontSize: 13, color: '#6D28D9', display: 'flex', gap: 8, alignItems: 'flex-start',
             }}>
               <Clock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              Bukti DP kamu sedang menunggu verifikasi dari vendor.
+              <div>
+                Bukti DP kamu sedang menunggu verifikasi dari vendor.{' '}
+                <span style={{ color: '#7c3aed', fontWeight: 600 }}>
+                  Untuk membatalkan di tahap ini, hubungi vendor langsung via WhatsApp karena sudah melibatkan DP.
+                </span>
+              </div>
             </div>
           )}
 
@@ -561,7 +681,12 @@ function BookingCard({
               fontSize: 13, color: '#065F46', display: 'flex', gap: 8, alignItems: 'flex-start',
             }}>
               <CheckCircle2 size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              DP terverifikasi! Tanggal event sudah dikunci. Vendor akan menghubungimu untuk detail teknis.
+              <div>
+                DP terverifikasi! Tanggal event sudah dikunci.{' '}
+                <span style={{ color: '#065F46', fontWeight: 600 }}>
+                  Jika perlu membatalkan, hubungi vendor via WhatsApp — pembatalan dan pengembalian DP diselesaikan secara langsung.
+                </span>
+              </div>
             </div>
           )}
 
@@ -575,9 +700,25 @@ function BookingCard({
             )}
 
             {booking.status === 'confirmed' && (
-              <button onClick={() => setUploadOpen(true)} style={{ ...btnPrimary, flex: 1 }}>
-                <Upload size={13} /> Upload Bukti DP
-              </button>
+              <>
+                <button onClick={() => setUploadOpen(true)} style={{ ...btnPrimary, flex: 1 }}>
+                  <Upload size={13} /> Upload Bukti DP
+                </button>
+                <button onClick={() => setCancelModalOpen(true)}
+                  style={{ ...btnDanger, paddingLeft: 14, paddingRight: 14, flexShrink: 0 }}
+                  title="Batalkan booking ini">
+                  <XCircle size={14} />
+                </button>
+              </>
+            )}
+
+            {(booking.status === 'waiting_payment' || booking.status === 'dp_verified') && (
+              <a
+                href={`https://wa.me/${booking.vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${booking.vendor.store_name}, saya ingin mendiskusikan pembatalan booking untuk event "${booking.event_name}".`)}`}
+                target="_blank" rel="noreferrer"
+                style={{ ...btnOutline, flex: 1, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, color: '#374151' }}>
+                <MessageSquare size={13} color="#25D366" /> Hubungi Vendor untuk Batalkan
+              </a>
             )}
 
             {booking.status === 'completed' && (
@@ -606,6 +747,13 @@ function BookingCard({
       )}
       {detailOpen && (
         <DetailModal booking={booking} onClose={() => setDetailOpen(false)} />
+      )}
+      {cancelModalOpen && (
+        <CancelConfirmedModal
+          booking={booking}
+          onClose={() => setCancelModalOpen(false)}
+          onCancelled={onRefresh}
+        />
       )}
     </>
   );

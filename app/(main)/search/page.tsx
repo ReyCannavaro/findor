@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -242,7 +242,7 @@ function SkeletonCard() {
   );
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [pendingQuery,    setPendingQuery]    = useState(searchParams.get('q') ?? '');
@@ -518,5 +518,12 @@ export default function SearchPage() {
         @media (max-width: 640px)  { .browse-grid { grid-template-columns: 1fr; } }
       `}</style>
     </main>
+  );
+}
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#f7f7f5' }} />}>
+      <SearchContent />
+    </Suspense>
   );
 }
