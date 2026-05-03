@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-// ============================================================
-// AUTH
-// ============================================================
-
 export const RegisterSchema = z.object({
   email: z.string().email("Email tidak valid"),
   password: z.string().min(8, "Password minimal 8 karakter"),
@@ -14,10 +10,6 @@ export const LoginSchema = z.object({
   email: z.string().email("Email tidak valid"),
   password: z.string().min(1, "Password wajib diisi"),
 });
-
-// ============================================================
-// BOOKING
-// ============================================================
 
 export const CreateBookingSchema = z.object({
   vendor_id: z.string().uuid("vendor_id tidak valid"),
@@ -47,12 +39,11 @@ export const RejectBookingSchema = z.object({
 
 export const VerifyPaymentSchema = z.object({
   action: z.enum(["verify", "clarify"]),
-  message: z.string().max(500).optional().nullable(),
-});
-
-// ============================================================
-// REVIEW
-// ============================================================
+  message: z.string().min(1, "Pesan klarifikasi wajib diisi saat memilih 'Minta Klarifikasi'").max(500).optional().nullable(),
+}).refine(
+  (data) => data.action === "verify" || (data.message && data.message.trim().length > 0),
+  { message: "Pesan klarifikasi wajib diisi saat memilih 'Minta Klarifikasi'", path: ["message"] }
+);
 
 export const CreateReviewSchema = z.object({
   booking_id: z.string().uuid("booking_id tidak valid"),
@@ -73,10 +64,6 @@ export const UpdateReviewSchema = z.object({
     .nullable(),
 });
 
-// ============================================================
-// VENDOR ONBOARDING
-// ============================================================
-
 export const VendorOnboardingSchema = z.object({
   store_name: z.string().min(2, "Nama toko minimal 2 karakter").max(100),
   category: z.string().min(1, "Kategori wajib dipilih"),
@@ -88,10 +75,6 @@ export const VendorOnboardingSchema = z.object({
   address: z.string().max(300).optional().nullable(),
 });
 
-// ============================================================
-// SERVICE
-// ============================================================
-
 export const ServiceSchema = z.object({
   name: z.string().min(1, "Nama layanan wajib diisi").max(100),
   category: z.string().min(1, "Kategori wajib dipilih"),
@@ -101,18 +84,10 @@ export const ServiceSchema = z.object({
   unit: z.string().max(50).optional().nullable(),
 });
 
-// ============================================================
-// AVAILABILITY
-// ============================================================
-
 export const SetAvailabilitySchema = z.object({
   dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   status: z.enum(["available", "off"]),
 });
-
-// ============================================================
-// SEARCH
-// ============================================================
 
 export const SearchParamsSchema = z.object({
   q: z.string().optional(),
@@ -129,10 +104,6 @@ export const SearchParamsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   per_page: z.coerce.number().int().positive().max(50).default(12),
 });
-
-// ============================================================
-// TYPE EXPORTS
-// ============================================================
 
 export type CreateBookingInput = z.infer<typeof CreateBookingSchema>;
 export type CreateReviewInput = z.infer<typeof CreateReviewSchema>;

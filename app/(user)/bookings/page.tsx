@@ -27,6 +27,8 @@ interface Booking {
   rejection_reason: string | null;
   dp_proof_url: string | null;
   dp_verified_at: string | null;
+  clarification_message: string | null;
+  clarification_at: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -484,7 +486,6 @@ function CancelConfirmedModal({
         </div>
 
         <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Warning info */}
           <div style={{ padding: '12px 14px', background: '#fffbeb', borderRadius: 12, border: '1px solid #fde68a', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <AlertCircle size={15} color="#d97706" style={{ flexShrink: 0, marginTop: 1 }} />
             <div style={{ fontSize: 13, color: '#92400e', lineHeight: 1.6 }}>
@@ -492,14 +493,12 @@ function CancelConfirmedModal({
             </div>
           </div>
 
-          {/* WA shortcut */}
           <a href={waLink} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', background: '#f0fdf4', borderRadius: 12, border: '1px solid #bbf7d0', textDecoration: 'none', color: '#15803d', fontSize: 13.5, fontWeight: 600 }}>
             <MessageSquare size={16} color="#16a34a" />
             Hubungi {booking.vendor.store_name} via WhatsApp dulu
           </a>
 
-          {/* Reason input */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 7 }}>
               Alasan Pembatalan <span style={{ color: '#ef4444' }}>*</span>
@@ -660,16 +659,33 @@ function BookingCard({
 
           {booking.status === 'waiting_payment' && (
             <div style={{
-              background: '#F5F3FF', border: '1px solid #DDD6FE',
+              background: booking.clarification_message ? '#fff7ed' : '#F5F3FF',
+              border: `1px solid ${booking.clarification_message ? '#fed7aa' : '#DDD6FE'}`,
               borderRadius: 10, padding: '10px 14px', marginBottom: 14,
-              fontSize: 13, color: '#6D28D9', display: 'flex', gap: 8, alignItems: 'flex-start',
+              fontSize: 13,
+              color: booking.clarification_message ? '#9a3412' : '#6D28D9',
+              display: 'flex', gap: 8, alignItems: 'flex-start',
             }}>
-              <Clock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+              {booking.clarification_message
+                ? <TriangleAlert size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                : <Clock size={14} style={{ flexShrink: 0, marginTop: 1 }} />}
               <div>
-                Bukti DP kamu sedang menunggu verifikasi dari vendor.{' '}
-                <span style={{ color: '#7c3aed', fontWeight: 600 }}>
-                  Untuk membatalkan di tahap ini, hubungi vendor langsung via WhatsApp karena sudah melibatkan DP.
-                </span>
+                {booking.clarification_message ? (
+                  <>
+                    <strong style={{ display: 'block', marginBottom: 4 }}>⚠️ Vendor meminta klarifikasi bukti DP kamu</strong>
+                    <p style={{ margin: 0, lineHeight: 1.6 }}>{booking.clarification_message}</p>
+                    <p style={{ margin: '6px 0 0', fontSize: 12, color: '#c2410c', fontWeight: 600 }}>
+                      Mohon upload ulang bukti DP yang valid menggunakan tombol di bawah.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    Bukti DP kamu sedang menunggu verifikasi dari vendor.{' '}
+                    <span style={{ color: '#7c3aed', fontWeight: 600 }}>
+                      Untuk membatalkan di tahap ini, hubungi vendor langsung via WhatsApp karena sudah melibatkan DP.
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           )}

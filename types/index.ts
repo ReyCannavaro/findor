@@ -68,6 +68,8 @@ export interface Booking {
   rejection_reason: string | null;
   dp_proof_url: string | null;
   dp_verified_at: string | null;
+  clarification_message: string | null;
+  clarification_at: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -152,7 +154,7 @@ export interface VendorSearchParams {
   price_min?: number;
   price_max?: number;
   rating_min?: number;
-  date?: string; // YYYY-MM-DD — hanya tampilkan vendor yang available di tanggal ini
+  date?: string;
   sort?: "rating" | "price_asc" | "price_desc" | "newest";
   page?: number;
   per_page?: number;
