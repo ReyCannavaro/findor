@@ -1,6 +1,13 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { ok, unauthorized, forbidden, notFound, conflict, serverError } from "@/lib/utils/api";
+import {
+  ok,
+  unauthorized,
+  forbidden,
+  notFound,
+  conflict,
+  serverError,
+} from "@/lib/utils/api";
 
 export async function PATCH(
   _request: NextRequest,
@@ -9,44 +16,39 @@ export async function PATCH(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
-    const { data: booking } = await supabase
-      .from("bookings")
-      .select("id, status, vendor_id, service_id, event_date")
-      .eq("id", id)
-      .single();
+    const { data: result, error: rpcError } = await supabase.rpc(
+      "confirm_booking_atomic",
+      {
+        p_booking_id:      id,
+        p_vendor_user_id:  user.id,
+      }
+    );
 
-    if (!booking) return notFound("Booking tidak ditemukan.");
+    if (rpcError) return serverError(rpcError.message);
 
-    const { data: vendor } = await supabase
-      .from("vendor_profiles")
-      .select("id")
-      .eq("id", booking.vendor_id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (!vendor) return forbidden("Kamu bukan vendor pemilik booking ini.");
-    if (booking.status !== "pending") {
-      return conflict(`Booking tidak bisa dikonfirmasi. Status saat ini: ${booking.status}.`);
+    if (!result.success) {
+      switch (result.code) {
+        case "NOT_FOUND":
+          return notFound(result.message);
+        case "FORBIDDEN":
+          return forbidden(result.message);
+        case "INVALID_STATUS":
+        case "DATE_CONFLICT":
+          return conflict(result.message);
+        default:
+          return serverError(result.message);
+      }
     }
 
-    const { data: updated, error } = await supabase
-      .from("bookings")
-      .update({
-        status: "confirmed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select("id, status, updated_at")
-      .single();
-
-    if (error) return serverError(error.message);
-
     return ok({
-      booking: updated,
-      message: "Booking dikonfirmasi. User perlu mengupload bukti DP untuk mengunci tanggal.",
+      booking: result.booking,
+      message:
+        "Booking dikonfirmasi dan tanggal telah dikunci. User perlu mengupload bukti DP.",
     });
   } catch {
     return serverError();

@@ -15,7 +15,9 @@ import {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
     const { searchParams } = new URL(request.url);
@@ -91,11 +93,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
     if (!user.email_confirmed_at) {
-      return forbidden("Email kamu belum diverifikasi. Cek inbox dan klik link konfirmasi.");
+      return forbidden(
+        "Email kamu belum diverifikasi. Cek inbox dan klik link konfirmasi."
+      );
     }
 
     const { data: profile } = await supabase
@@ -108,67 +114,49 @@ export async function POST(request: NextRequest) {
       return badRequest(formatZodErrors(parsed.error.flatten().fieldErrors));
     }
 
-    const { vendor_id, service_id, event_date, event_name, event_location, setup_time, notes } = parsed.data;
+    const {
+      vendor_id,
+      service_id,
+      event_date,
+      event_name,
+      event_location,
+      setup_time,
+      notes,
+    } = parsed.data;
 
-    const { data: vendor } = await supabase
-      .from("vendor_profiles").select("id, is_active, is_verified, user_id").eq("id", vendor_id).single();
-    if (!vendor || !vendor.is_active || !vendor.is_verified) {
-      return badRequest("Vendor tidak ditemukan atau belum aktif.");
+    const { data: result, error: rpcError } = await supabase.rpc(
+      "create_booking_atomic",
+      {
+        p_user_id:        user.id,
+        p_vendor_id:      vendor_id,
+        p_service_id:     service_id,
+        p_event_date:     event_date,
+        p_event_name:     event_name,
+        p_event_location: event_location,
+        p_setup_time:     setup_time ?? null,
+        p_notes:          notes ?? null,
+      }
+    );
+
+    if (rpcError) return serverError(rpcError.message);
+
+    if (!result.success) {
+      switch (result.code) {
+        case "VENDOR_UNAVAILABLE":
+        case "SERVICE_UNAVAILABLE":
+          return badRequest(result.message);
+        case "SELF_BOOKING":
+          return forbidden(result.message);
+        case "DATE_UNAVAILABLE":
+        case "DATE_CONFLICT":
+          return conflict(result.message);
+        default:
+          return serverError(result.message);
+      }
     }
-
-    if (vendor.user_id === user.id) {
-      return forbidden("Kamu tidak bisa booking ke toko kamu sendiri.");
-    }
-
-    const { data: service } = await supabase
-      .from("services").select("id, is_active").eq("id", service_id).eq("vendor_id", vendor_id).single();
-    if (!service || !service.is_active) {
-      return badRequest("Layanan tidak ditemukan atau tidak aktif.");
-    }
-
-    const { data: availBlock } = await supabase
-      .from("availability_blocks")
-      .select("status")
-      .eq("vendor_id", vendor_id)
-      .eq("date", event_date)
-      .single();
-
-    if (availBlock && availBlock.status !== "available") {
-      return conflict(`Tanggal ${event_date} tidak tersedia (status: ${availBlock.status}).`);
-    }
-
-    const { count: conflictCount } = await supabase
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("vendor_id", vendor_id)
-      .eq("service_id", service_id)
-      .eq("event_date", event_date)
-      .in("status", ["confirmed", "waiting_payment", "dp_verified"]);
-
-    if (conflictCount && conflictCount > 0) {
-      return conflict("Layanan ini sudah di-booking untuk tanggal tersebut. Pilih tanggal lain.");
-    }
-
-    const { data: booking, error: insertError } = await supabase
-      .from("bookings")
-      .insert({
-        vendor_id,
-        user_id: user.id,
-        service_id,
-        event_date,
-        event_name,
-        event_location,
-        setup_time: setup_time ?? null,
-        notes: notes ?? null,
-        status: "pending",
-      })
-      .select("id, vendor_id, user_id, service_id, event_date, event_name, event_location, setup_time, notes, status, created_at")
-      .single();
-
-    if (insertError) return serverError(insertError.message);
 
     return created({
-      booking,
+      booking: result.booking,
       message: "Booking request berhasil dikirim! Tunggu konfirmasi dari vendor.",
     });
   } catch {
