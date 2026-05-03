@@ -1,6 +1,15 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { ok, badRequest, unauthorized, forbidden, notFound, conflict, serverError } from "@/lib/utils/api";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  ok,
+  badRequest,
+  unauthorized,
+  forbidden,
+  notFound,
+  conflict,
+  serverError,
+} from "@/lib/utils/api";
 import { validateFileUpload } from "@/lib/utils/api";
 
 export async function POST(
@@ -9,8 +18,11 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
     const { data: booking } = await supabase
@@ -40,7 +52,6 @@ export async function POST(
       allowedTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
     });
     if (fileError) return badRequest(fileError);
-
     if (booking.dp_proof_url) {
       const oldPath = booking.dp_proof_url.replace("booking-proofs/", "");
       await supabase.storage.from("booking-proofs").remove([oldPath]);
@@ -53,11 +64,14 @@ export async function POST(
       .from("booking-proofs")
       .upload(filePath, file, { contentType: file.type, upsert: false });
 
-    if (uploadError) return serverError(`Gagal upload file: ${uploadError.message}`);
+    if (uploadError) {
+      return serverError(`Gagal upload file: ${uploadError.message}`);
+    }
 
     const dp_proof_url = `booking-proofs/${filePath}`;
+    const adminSupabase = createAdminClient();
 
-    const { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await adminSupabase
       .from("bookings")
       .update({
         dp_proof_url,
@@ -65,12 +79,18 @@ export async function POST(
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
+      .eq("user_id", user.id)
       .select("id, status, dp_proof_url, updated_at")
       .single();
 
     if (updateError) {
       await supabase.storage.from("booking-proofs").remove([filePath]);
       return serverError(updateError.message);
+    }
+
+    if (!updated) {
+      await supabase.storage.from("booking-proofs").remove([filePath]);
+      return forbidden("Gagal memperbarui booking. Pastikan kamu adalah pemilik booking ini.");
     }
 
     return ok({
