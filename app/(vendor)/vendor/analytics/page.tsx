@@ -200,7 +200,7 @@ export default function VendorAnalyticsPage() {
   const fetchAnalytics = useCallback(async (m = months) => {
     try {
       setError(null);
-      const res  = await fetch(`/api/v1/vendors/analytics?months=${m}`);
+      const res  = await fetch(`/api/v1/analytics?months=${m}`);
       const json = await res.json();
       if (res.status === 401) { router.push('/login?redirect=/vendor/analytics'); return; }
       if (res.status === 403) { router.push('/vendor/register'); return; }
