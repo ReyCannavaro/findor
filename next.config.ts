@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "https://pueudowcqgsduptecstj.supabase.co",
+        hostname: "pueudowcqgsduptecstj.supabase.co",
         pathname: "/storage/v1/object/**",
       },
       {
@@ -18,13 +18,6 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
       },
     ],
-  },
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: false, 
   },
 };
 

@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         .from("availability_blocks")
         .select("vendor_id")
         .eq("date", date)
-        .in("status", ["full", "off"]);
+        .in("status", ["booked", "blocked"]);
 
       blockedVendorIds = (blocks ?? []).map((b) => b.vendor_id as string);
     }

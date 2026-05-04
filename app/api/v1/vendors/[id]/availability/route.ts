@@ -79,7 +79,7 @@ export async function PATCH(
       .select("date, booking_id")
       .eq("vendor_id", id)
       .in("date", dates)
-      .eq("status", "full")
+      .eq("status", "booked")
       .not("booking_id", "is", null);
 
     if (lockedBlocks && lockedBlocks.length > 0) {

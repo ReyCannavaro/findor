@@ -715,10 +715,10 @@ function BookingCard({
               </button>
             )}
 
-            {booking.status === 'confirmed' && (
+            {(booking.status === 'confirmed' || (booking.status === 'waiting_payment' && !!booking.clarification_message)) && (
               <>
                 <button onClick={() => setUploadOpen(true)} style={{ ...btnPrimary, flex: 1 }}>
-                  <Upload size={13} /> Upload Bukti DP
+                  <Upload size={13} /> {booking.status === 'waiting_payment' ? 'Upload Ulang Bukti DP' : 'Upload Bukti DP'}
                 </button>
                 <button onClick={() => setCancelModalOpen(true)}
                   style={{ ...btnDanger, paddingLeft: 14, paddingRight: 14, flexShrink: 0 }}

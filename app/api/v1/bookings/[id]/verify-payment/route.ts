@@ -74,7 +74,7 @@ export async function PATCH(
           {
             vendor_id: booking.vendor_id,
             date: booking.event_date,
-            status: "full",
+            status: "booked",
             booking_id: id,
           },
           { onConflict: "vendor_id,date" }
