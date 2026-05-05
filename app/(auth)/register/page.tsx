@@ -11,9 +11,7 @@ export default function RegisterPage() {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState('');
   const [focused, setFocused]     = useState<string | null>(null);
-
   const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }));
-
   const passStrength = form.password.length === 0 ? 0 : form.password.length < 8 ? 1 : form.password.length < 12 ? 2 : 3;
   const passLabels  = ['', 'Lemah', 'Sedang', 'Kuat'];
   const passColors  = ['', '#ef4444', '#f5a623', '#16a34a'];
@@ -40,13 +38,11 @@ export default function RegisterPage() {
     finally { setLoading(false); }
   };
 
-  // ── EMAIL VERIFICATION SCREEN ─────────────────────────────
   if (step === 'verify') return (
     <div style={wrapStyle}>
       <LeftPanel />
       <div style={rightStyle}>
         <div style={cardStyle}>
-          {/* Animated envelope */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{
               width: 96, height: 96, borderRadius: '50%', margin: '0 auto 20px',
@@ -57,7 +53,6 @@ export default function RegisterPage() {
               position: 'relative',
             }}>
               <Mail size={40} color="#059669" strokeWidth={1.5} />
-              {/* Ping animation */}
               <div style={{
                 position: 'absolute', inset: -6,
                 borderRadius: '50%', border: '2px solid #a7f3d0',
@@ -80,7 +75,6 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Steps */}
           <div style={{ background: '#f8fafc', borderRadius: 16, padding: '20px', marginBottom: 24 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', marginBottom: 14, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Langkah selanjutnya
@@ -104,7 +98,6 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          {/* Warning: cek spam */}
           <div style={{
             background: '#fffbeb', border: '1px solid #fde68a',
             borderRadius: 12, padding: '12px 16px', marginBottom: 24,
@@ -141,14 +134,12 @@ export default function RegisterPage() {
     </div>
   );
 
-  // ── REGISTER FORM ──────────────────────────────────────────
   return (
     <div style={wrapStyle}>
       <LeftPanel />
       <div style={rightStyle}>
         <div style={cardStyle}>
 
-          {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <Link href="/">
               <img src="/logo_findor.jpg" alt="Findor" style={{ height: 44, width: 'auto', objectFit: 'contain', borderRadius: 10 }} />
@@ -172,7 +163,6 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
 
-            {/* Nama */}
             <Field label="Nama Lengkap">
               <input
                 value={form.full_name} onChange={e => set('full_name', e.target.value)}
@@ -182,7 +172,6 @@ export default function RegisterPage() {
               />
             </Field>
 
-            {/* Email */}
             <Field label="Email">
               <input
                 type="email" value={form.email} onChange={e => set('email', e.target.value)}
@@ -192,7 +181,6 @@ export default function RegisterPage() {
               />
             </Field>
 
-            {/* Password */}
             <Field label="Password">
               <div style={{ position: 'relative' }}>
                 <input
@@ -204,7 +192,6 @@ export default function RegisterPage() {
                 />
                 <EyeBtn show={showPass} toggle={() => setShowPass(v => !v)} />
               </div>
-              {/* Strength bar */}
               {form.password && (
                 <div style={{ marginTop: 8 }}>
                   <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
@@ -223,7 +210,6 @@ export default function RegisterPage() {
               )}
             </Field>
 
-            {/* Konfirmasi */}
             <Field label="Konfirmasi Password">
               <div style={{ position: 'relative' }}>
                 <input
@@ -288,15 +274,12 @@ export default function RegisterPage() {
   );
 }
 
-// ── SHARED COMPONENTS ───────────────────────────────────────
-
 function LeftPanel() {
   return (
     <div style={{
       flex: '0 0 44%', position: 'relative', overflow: 'hidden',
       background: 'linear-gradient(160deg, #0a2e20 0%, #0d3b2e 50%, #1a5c41 100%)',
     }}>
-      {/* BG photo */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: 'url(https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900&q=80)',
@@ -304,18 +287,14 @@ function LeftPanel() {
         opacity: 0.12,
       }} />
 
-      {/* Decorative orbs */}
       <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,166,35,0.15) 0%, transparent 70%)' }} />
       <div style={{ position: 'absolute', bottom: -60, left: -60, width: 250, height: 250, borderRadius: '50%', background: 'radial-gradient(circle, rgba(64,145,108,0.2) 0%, transparent 70%)' }} />
-
       <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '48px 40px' }}>
 
-        {/* Logo */}
         <Link href="/">
           <img src="/logo_findor.jpg" alt="Findor" style={{ height: 44, width: 'auto', objectFit: 'contain', borderRadius: 10 }} />
         </Link>
 
-        {/* Headline */}
         <div>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#f5a623', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>
             ✦ Platform Event Indonesia
@@ -333,7 +312,6 @@ function LeftPanel() {
           </p>
         </div>
 
-        {/* Feature list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
             { icon: <Shield size={15} />, text: 'Vendor terverifikasi dengan KTP asli' },
@@ -355,7 +333,6 @@ function LeftPanel() {
           ))}
         </div>
 
-        {/* Social proof */}
         <div style={{
           background: 'rgba(255,255,255,0.06)',
           border: '1px solid rgba(255,255,255,0.1)',
@@ -414,8 +391,6 @@ function Styles() {
     `}</style>
   );
 }
-
-// ── SHARED STYLES ───────────────────────────────────────────
 
 const wrapStyle: React.CSSProperties = {
   display: 'flex', minHeight: '100vh',
