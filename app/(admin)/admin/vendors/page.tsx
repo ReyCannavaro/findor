@@ -386,7 +386,6 @@ export default function AdminVendorsPage() {
       </div>
 
       <div style={{ background: "white", borderRadius: 16, border: "1px solid #EBEBEB", overflow: "hidden" }}>
-
         <div style={{ display: "flex", borderBottom: "1px solid #F3F4F6", padding: "0 4px" }}>
           {(Object.keys(TAB_CONFIG) as TabType[]).map((t) => {
             const active = tab === t;
