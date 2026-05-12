@@ -33,7 +33,14 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (GUEST_ONLY.some((r) => pathname.startsWith(r))) {
-    if (user) return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (user) {
+      const { data: profile } = await supabase
+        .from("user_profiles").select("role").eq("id", user.id).single();
+      const role = profile?.role ?? "user";
+      if (role === "admin")  return NextResponse.redirect(new URL("/admin/vendors", request.url));
+      if (role === "vendor") return NextResponse.redirect(new URL("/vendor/dashboard", request.url));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
     return supabaseResponse;
   }
 

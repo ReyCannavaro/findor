@@ -26,7 +26,14 @@ function LoginForm() {
       });
       const data = await res.json();
       if (!data.success) { setError(data.error ?? 'Email atau password salah.'); return; }
-      router.push(redirectTo);
+      const role = data.data?.user?.role ?? 'user';
+      const defaultRedirect =
+        role === 'admin'  ? '/admin/vendors' :
+        role === 'vendor' ? '/vendor/dashboard' :
+        '/dashboard';
+      const destination = redirectTo !== '/' ? redirectTo : defaultRedirect;
+
+      router.push(destination);
       router.refresh();
     } catch { setError('Terjadi kesalahan. Coba lagi.'); }
     finally { setLoading(false); }
