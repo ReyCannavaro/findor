@@ -60,7 +60,7 @@ export default function RegisterPage() {
               }} />
             </div>
             <h2 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', margin: '0 0 8px', fontFamily: 'Fraunces, serif', letterSpacing: '-0.5px' }}>
-              Cek Inbox Kamu! 📬
+              Cek Inbox Kamu! 
             </h2>
             <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.7 }}>
               Kami sudah mengirim link verifikasi ke

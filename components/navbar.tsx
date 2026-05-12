@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Menu, X, ArrowRight, ChevronDown, User, Receipt, Heart, Store, LogOut } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 export default function Navbar() {
@@ -11,11 +11,37 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<{ id: string; name: string; role: string; isVendor: boolean } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    try { setUser(JSON.parse(localStorage.getItem('user') || 'null')); } catch { setUser(null); }
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/auth/me', { cache: 'no-store' });
+      if (!res.ok) { setUser(null); return; }
+      const data = await res.json();
+      if (data.success && data.data) {
+        const p = data.data;
+        setUser({
+          id:       p.id,
+          name:     p.full_name ?? p.email ?? 'User',
+          role:     p.role,
+          isVendor: p.role === 'vendor',
+        });
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
   }, []);
+
+  // Mount: fetch sekali
+  useEffect(() => { fetchUser(); }, [fetchUser]);
+
+  // Re-fetch saat navigasi (pathname berubah)
+  useEffect(() => { fetchUser(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -35,11 +61,14 @@ export default function Navbar() {
 
   const isLoggedIn = !!user;
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch { /* silent */ }
     setUser(null);
     setDropdownOpen(false);
     router.push('/');
+    router.refresh();
   };
 
   const navLinks = [
@@ -192,6 +221,12 @@ export default function Navbar() {
           box-shadow: 0 6px 22px rgba(28,61,46,0.38);
         }
         .fn-cta:active { transform: translateY(0); }
+
+        @keyframes fn-shimmer {
+          0%   { opacity: 0.5; }
+          50%  { opacity: 1; }
+          100% { opacity: 0.5; }
+        }
 
         @keyframes navSlideDown {
           from { opacity: 0; transform: translateY(-18px); }
@@ -446,7 +481,9 @@ export default function Navbar() {
           <div className="fn-desktop-actions" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div className="fn-sep-line" />
 
-            {!isLoggedIn ? (
+            {authLoading ? (
+              <div style={{ width: 80, height: 32, borderRadius: 999, background: 'rgba(0,0,0,0.06)', animation: 'fn-shimmer 1.4s infinite' }} />
+            ) : !isLoggedIn ? (
               <>
                 <Link href="/login" className="fn-login">Masuk</Link>
                 <Link href="/vendor/register" className="fn-cta">Daftarkan Vendormu</Link>
