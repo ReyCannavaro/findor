@@ -37,10 +37,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     fetch("/api/v1/auth/me")
       .then((r) => r.json())
       .then((d) => {
-        if (!d.success || d.data?.profile?.role !== "admin") {
+        if (!d.success || d.data?.role !== "admin") {
           router.replace("/login");
         } else {
-          setUser(d.data.profile);
+          setUser(d.data);
         }
       })
       .catch(() => router.replace("/login"));
