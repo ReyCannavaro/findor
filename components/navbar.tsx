@@ -54,7 +54,12 @@ export default function Navbar() {
     { icon: <User size={15} />, label: 'Profil Saya', href: '/profile' },
     { icon: <Receipt size={15} />, label: 'Transaksi Saya', href: '/bookings' },
     { icon: <Heart size={15} />, label: 'Wishlist', href: '/bookmarks' },
-    { icon: <Store size={15} />, label: 'Dashboard Vendor', href: '/vendor/dashboard' },
+    ...(user?.isVendor
+      ? [{ icon: <Store size={15} />, label: 'Dashboard Vendor', href: '/vendor/dashboard' }]
+      : user?.role !== 'admin'
+        ? [{ icon: <Store size={15} />, label: 'Daftarkan Toko', href: '/vendor/register' }]
+        : []
+    ),
   ];
 
   return (
