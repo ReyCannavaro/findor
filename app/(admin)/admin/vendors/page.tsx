@@ -1,7 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import { toast, ToastContainer } from "@/components/ui/Toast";
 
@@ -110,7 +110,7 @@ const ACTION_CONFIG: Record<VendorAction, {
     reasonPlaceholder: "Contoh: Vendor melanggar ketentuan layanan.",
   },
   reject: {
-    label: "❌ Tolak",
+    label: "Tolak",
     confirmLabel: "Konfirmasi Tolak",
     btnClass: "bg-red-600 hover:bg-red-700",
     selectedClass: "border-red-500 bg-red-50 text-red-700",
@@ -171,8 +171,6 @@ function ReviewModal({ vendor, onClose, onActionDone }: {
 
   return (
     <div className="space-y-6">
-
-      {/* Status badge */}
       <div className="flex items-center gap-2">
         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${stateInfo.bg} ${stateInfo.color}`}>
           {stateInfo.label}
@@ -468,7 +466,6 @@ export default function AdminVendorsPage() {
         )}
       </div>
 
-      {/* Modal */}
       <Modal open={!!reviewTarget} onClose={() => setReviewTarget(null)}
         title={`Kelola Vendor — ${reviewTarget?.store_name ?? ""}`} size="xl">
         {reviewTarget && (

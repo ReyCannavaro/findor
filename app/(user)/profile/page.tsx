@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -7,7 +8,7 @@ import {
   User, Phone, Mail, Shield, Store, CheckCircle2,
   Clock, XCircle, ChevronRight, ArrowRight, Save,
   Loader2, Upload, FileText, X, AlertCircle,
-  Star, LayoutGrid, MapPin, Eye, EyeOff,
+  Star, LayoutGrid, MapPin, Eye, EyeOff, LogOut, Receipt, Heart,
 } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
@@ -537,6 +538,13 @@ export default function ProfilePage() {
 
   const isDirty = user && (fullName !== (user.full_name ?? '') || phone !== (user.phone ?? ''));
 
+  const handleLogout = async () => {
+    if (!confirm('Yakin ingin keluar dari akun ini?')) return;
+    await fetch('/api/v1/auth/logout', { method: 'POST' });
+    router.push('/');
+    router.refresh();
+  };
+
   const userInitials = user ? initials(user.full_name, user.email) : '?';
 
   return (
@@ -844,6 +852,30 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              <div className="section-animate" style={{ animationDelay: '0.3s' }}>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: '100%', padding: '15px 20px',
+                    background: '#fff', borderRadius: 20,
+                    border: '1px solid #FECACA',
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+                >
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: '#FEF2F2', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <LogOut size={16} color="#DC2626" />
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#DC2626' }}>Keluar</div>
+                    <div style={{ fontSize: 12, color: '#F87171' }}>Logout dari akun Findor</div>
+                  </div>
+                </button>
+              </div>
+
             </div>
           )}
         </div>
@@ -853,5 +885,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-import { Receipt, Heart } from 'lucide-react';
