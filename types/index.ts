@@ -7,7 +7,7 @@ export type BookingStatus =
   | "rejected"
   | "cancelled";
 
-export type AvailabilityStatus = "available" | "booked" | "blocked";
+export type AvailabilityStatus = "available" | "full" | "off";
 export type UserRole = "user" | "vendor" | "admin";
 export interface UserProfile {
   id: string;
@@ -70,6 +70,7 @@ export interface Booking {
   dp_verified_at: string | null;
   clarification_message: string | null;
   clarification_at: string | null;
+  cancellation_reason: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
