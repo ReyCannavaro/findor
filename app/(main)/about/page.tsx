@@ -42,10 +42,6 @@ export default function AboutPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, transparent 40%, rgba(13,59,46,0.65) 100%)' }} />
 
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(245,166,35,0.15)', border: '1px solid rgba(245,166,35,0.35)', borderRadius: 100, padding: '6px 16px', marginBottom: 24 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--amber)', display: 'inline-block' }} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Tentang Kami</span>
-          </div>
           <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 'clamp(32px, 5vw, 58px)', fontWeight: 900, color: 'var(--white)', letterSpacing: '-1.5px', lineHeight: 1.08, marginBottom: 20 }}>
             Kami Hadir untuk Membuat<br />Event Anda{' '}
             <em style={{ fontStyle: 'italic', color: 'var(--amber)', fontWeight: 300 }}>Tak Terlupakan</em>
