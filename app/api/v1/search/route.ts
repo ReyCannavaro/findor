@@ -11,8 +11,14 @@ export async function GET(request: NextRequest) {
     if (!parsed.success) {
       return badRequest(parsed.error.issues.map((e) => e.message).join("; "));
     }
-    const { q, category, city, price_min, price_max, rating_min, date, sort, page, per_page } = parsed.data;
+
+    const {
+      q, category, city, price_min, price_max,
+      rating_min, date, sort, page, per_page,
+    } = parsed.data;
+
     let priceFilteredVendorIds: string[] | null = null;
+
     if (price_min !== undefined || price_max !== undefined) {
       let priceQuery = supabase
         .from("services")
@@ -25,7 +31,9 @@ export async function GET(request: NextRequest) {
       const { data: priceRows, error: priceErr } = await priceQuery;
       if (priceErr) return serverError(priceErr.message);
 
-      priceFilteredVendorIds = [...new Set((priceRows ?? []).map((r) => r.vendor_id as string))];
+      priceFilteredVendorIds = [
+        ...new Set((priceRows ?? []).map((r) => r.vendor_id as string)),
+      ];
 
       if (priceFilteredVendorIds.length === 0) {
         return ok({
@@ -42,9 +50,40 @@ export async function GET(request: NextRequest) {
         .from("availability_blocks")
         .select("vendor_id")
         .eq("date", date)
-        .in("status", ["full", "off", "booked", "blocked"]);
+        .in("status", ["full", "off"]);
 
       blockedVendorIds = (blocks ?? []).map((b) => b.vendor_id as string);
+    }
+
+    if (sort === "price_asc" || sort === "price_desc") {
+      const { data: result, error: rpcError } = await supabase.rpc(
+        "search_vendors_by_price",
+        {
+          p_q:                    q?.trim() || null,
+          p_category:             category || null,
+          p_city:                 city || null,
+          p_rating_min:           rating_min ?? null,
+          p_vendor_ids:           priceFilteredVendorIds,
+          p_excluded_vendor_ids:  blockedVendorIds.length > 0 ? blockedVendorIds : null,
+          p_ascending:            sort === "price_asc",
+          p_page:                 page,
+          p_per_page:             per_page,
+        }
+      );
+
+      if (rpcError) return serverError(rpcError.message);
+
+      const vendors  = result?.vendors  ?? [];
+      const total    = result?.total    ?? 0;
+
+      return ok({
+        vendors,
+        total,
+        page,
+        per_page,
+        total_pages: Math.ceil(total / per_page),
+        filters: { q, category, city, price_min, price_max, rating_min, date, sort },
+      });
     }
 
     let query = supabase
@@ -68,36 +107,11 @@ export async function GET(request: NextRequest) {
     if (blockedVendorIds.length > 0) {
       query = query.not("id", "in", `(${blockedVendorIds.join(",")})`);
     }
-    if (sort === "price_asc" || sort === "price_desc") {
-      const { data: allVendors, error, count } = await query;
-      if (error) return serverError(error.message);
-
-      const sorted = (allVendors ?? []).sort((a, b) => {
-        const aServices = (a.services as { price_min: number }[]) ?? [];
-        const bServices = (b.services as { price_min: number }[]) ?? [];
-        const aMin = aServices.length > 0 ? Math.min(...aServices.map((s) => s.price_min)) : Infinity;
-        const bMin = bServices.length > 0 ? Math.min(...bServices.map((s) => s.price_min)) : Infinity;
-        return sort === "price_asc" ? aMin - bMin : bMin - aMin;
-      });
-
-      const total = count ?? sorted.length;
-      const from  = (page - 1) * per_page;
-      const paginated = sorted.slice(from, from + per_page);
-
-      return ok({
-        vendors: paginated,
-        total,
-        page,
-        per_page,
-        total_pages: Math.ceil(total / per_page),
-        filters: { q, category, city, price_min, price_max, rating_min, date, sort },
-      });
-    }
 
     switch (sort) {
-      case "rating":  query = query.order("rating_avg",  { ascending: false }); break;
-      case "newest":  query = query.order("created_at",  { ascending: false }); break;
-      default:        query = query.order("rating_avg",  { ascending: false }); break;
+      case "rating":  query = query.order("rating_avg", { ascending: false }); break;
+      case "newest":  query = query.order("created_at", { ascending: false }); break;
+      default:        query = query.order("rating_avg", { ascending: false }); break;
     }
 
     const from = (page - 1) * per_page;
