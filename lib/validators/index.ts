@@ -86,7 +86,7 @@ export const ServiceSchema = z.object({
 
 export const SetAvailabilitySchema = z.object({
   dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-  status: z.enum(["available", "blocked"]),
+  status: z.enum(["available", "full", "off"]),
 });
 
 export const SearchParamsSchema = z.object({
