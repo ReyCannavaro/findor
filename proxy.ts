@@ -9,7 +9,7 @@ const ADMIN_API_ROUTES = ["/api/v1/admin"];
 
 const LOGIN_REQUIRED   = ["/vendor/register"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
